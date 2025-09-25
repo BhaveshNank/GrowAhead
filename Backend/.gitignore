@@ -1,0 +1,45 @@
+# Environment files - CRITICAL!
+.env
+.env.local
+.env.production  
+.env.staging
+.env.development
+.env.test
+*.env
+!.env.example
+
+# Dependencies
+node_modules/
+
+# Logs
+*.log
+logs/
+
+# Database files
+*.sqlite
+*.sqlite3
+*.db
+
+# Uploads directory (user files)
+uploads/*
+!uploads/.gitkeep
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# AWS deployment files
+.elasticbeanstalk/
+.platform/
+
+# SSL certificates and keys
+*.key
+*.pem
+*.crt
+*.ca-bundle
+
+# IDE files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
