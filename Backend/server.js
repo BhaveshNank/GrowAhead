@@ -37,15 +37,33 @@ pool.connect((err, client, release) => {
 // Middleware
 app.use(helmet()); // Security headers
 app.use(cors({
-    origin: [
-        'http://localhost:3000',
-        'http://127.0.0.1:3000', 
-        process.env.FRONTEND_URL
-    ].filter(Boolean),
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        
+        const allowedOrigins = [
+            'http://localhost:3000',
+            'http://127.0.0.1:3000',
+            'https://growahead-beta.vercel.app',
+            // Allow all Vercel preview URLs for your project
+        ];
+        
+        // Check if origin matches allowed patterns
+        if (allowedOrigins.includes(origin) || 
+            origin.includes('bhavesh-nankanis-projects.vercel.app') ||
+            origin.includes('growahead-') && origin.includes('.vercel.app')) {
+            callback(null, true);
+        } else {
+            console.warn(`CORS blocked origin: ${origin}`);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
+
+
 app.use(express.json({ limit: '10mb' })); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 
