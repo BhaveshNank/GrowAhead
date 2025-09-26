@@ -18,6 +18,10 @@ const pool = new Pool({
     database: process.env.DB_NAME,
     password: process.env.DB_PASSWORD,
     port: process.env.DB_PORT || 5432,
+    // Add SSL configuration for AWS RDS
+    ssl: process.env.NODE_ENV === 'production' ? {
+        rejectUnauthorized: false
+    } : false
 });
 
 // Test database connection
@@ -150,6 +154,154 @@ app.get('/api/test-calculation-direct', (req, res) => {
             error: error.message,
             stack: error.stack,
             message: 'Failed to test calculation - check if utils/roundup.js exists and has the updated function'
+        });
+    }
+});
+
+// ROOT ROUTE - Fix for AWS Load Balancer health checks
+app.get('/', (req, res) => {
+    res.json({ 
+        status: 'OK',
+        service: 'GrowAhead Backend API',
+        version: '1.0.0',
+        timestamp: new Date().toISOString(),
+        message: 'Welcome to GrowAhead Micro-Investment Platform',
+        endpoints: {
+            health: '/api/health',
+            auth: '/api/auth',
+            transactions: '/api/transactions',
+            wallet: '/api/wallet'
+        }
+    });
+});
+
+app.get('/api/setup-database', async (req, res) => {
+    try {
+        console.log('Setting up COMPLETE database schema...');
+        
+        // Create users table with email verification support
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                email VARCHAR(255) UNIQUE NOT NULL,
+                password_hash VARCHAR(255) NOT NULL,
+                risk_profile VARCHAR(20) DEFAULT 'balanced' CHECK (risk_profile IN ('conservative', 'balanced', 'aggressive')),
+                email_verified BOOLEAN DEFAULT FALSE,
+                verification_otp VARCHAR(10),
+                otp_expires_at TIMESTAMP,
+                otp_attempts INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        // Create email verifications log table
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS email_verifications (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                email VARCHAR(255) NOT NULL,
+                otp_code VARCHAR(10) NOT NULL,
+                expires_at TIMESTAMP NOT NULL,
+                verified_at TIMESTAMP,
+                ip_address VARCHAR(45),
+                user_agent TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        // Create transactions table
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS transactions (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                merchant VARCHAR(255) NOT NULL,
+                amount DECIMAL(10,2) NOT NULL,
+                category VARCHAR(100),
+                transaction_date DATE NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        // Create round-ups table
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS roundups (
+                id SERIAL PRIMARY KEY,
+                transaction_id INTEGER REFERENCES transactions(id) ON DELETE CASCADE,
+                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                roundup_amount DECIMAL(10,2) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        // Create wallet table
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS wallet (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+                total_balance DECIMAL(10,2) DEFAULT 0.00,
+                last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        // Create investment profiles table
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS investment_profiles (
+                id SERIAL PRIMARY KEY,
+                profile_name VARCHAR(20) UNIQUE NOT NULL,
+                annual_return_rate DECIMAL(5,4) NOT NULL,
+                description TEXT
+            )
+        `);
+
+        // Insert default investment profiles
+        await pool.query(`
+            INSERT INTO investment_profiles (profile_name, annual_return_rate, description) 
+            VALUES 
+                ('conservative', 0.0500, '5% annual return - Low risk with government bonds and fixed deposits'),
+                ('balanced', 0.0800, '8% annual return - Medium risk with mix of stocks and bonds'),
+                ('aggressive', 0.1200, '12% annual return - High risk with growth stocks and equity funds')
+            ON CONFLICT (profile_name) DO NOTHING
+        `);
+
+        // Create indexes for better performance
+        await pool.query(`
+            CREATE INDEX IF NOT EXISTS idx_transactions_user_date ON transactions(user_id, transaction_date)
+        `);
+        await pool.query(`
+            CREATE INDEX IF NOT EXISTS idx_roundups_user ON roundups(user_id)
+        `);
+        await pool.query(`
+            CREATE INDEX IF NOT EXISTS idx_transactions_user ON transactions(user_id)
+        `);
+        await pool.query(`
+            CREATE INDEX IF NOT EXISTS idx_email_verifications_user ON email_verifications(user_id)
+        `);
+        await pool.query(`
+            CREATE INDEX IF NOT EXISTS idx_email_verifications_otp ON email_verifications(otp_code, expires_at)
+        `);
+
+        console.log('Complete database setup completed successfully');
+        
+        res.json({
+            success: true,
+            message: 'Complete database schema created successfully',
+            tables: [
+                'users', 
+                'investment_profiles', 
+                'email_verifications', 
+                'wallet', 
+                'transactions', 
+                'roundups'
+            ]
+        });
+        
+    } catch (error) {
+        console.error('Database setup error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
         });
     }
 });
