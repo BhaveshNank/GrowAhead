@@ -1,4 +1,4 @@
-// src/components/ui/AuthWrapper.tsx - Updated with owner credit
+// src/components/ui/AuthWrapper.tsx - Updated with Enhanced Investment Strategy Dropdown
 'use client'
 
 import { useEffect, ReactNode, useRef, useCallback, useState } from 'react'
@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import OTPVerification from '@/components/ui/OTPVerification'
+import InvestmentStrategyDropdown from '@/components/ui/InvestmentStrategyDropdown'
 import { 
   Wallet, 
   LogIn, 
@@ -350,22 +351,17 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
                         </div>
                       </div>
 
-                      {/* Risk Profile (Register only) */}
+                      {/* Enhanced Investment Strategy Dropdown (Register only) */}
                       {showRegister && (
                         <div className="space-y-2">
                           <Label htmlFor="riskProfile" className="text-sm font-medium text-slate-700">
                             Investment Strategy
                           </Label>
-                          <select
-                            id="riskProfile"
+                          <InvestmentStrategyDropdown
                             value={formData.riskProfile}
-                            onChange={(e) => handleChange('riskProfile', e.target.value)}
-                            className="w-full h-12 px-3 border border-slate-200 rounded-md focus:border-slate-400 focus:ring-slate-400 focus:outline-none"
-                          >
-                            <option value="conservative">Conservative (5% return)</option>
-                            <option value="balanced">Balanced (8% return)</option>
-                            <option value="aggressive">Aggressive (12% return)</option>
-                          </select>
+                            onChange={(value) => handleChange('riskProfile', value)}
+                            disabled={isLoading}
+                          />
                         </div>
                       )}
 

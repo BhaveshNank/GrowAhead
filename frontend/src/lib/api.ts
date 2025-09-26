@@ -54,36 +54,51 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    console.error('🔐 API Error:', {
+    console.error('🔐 API Error Details:', {
       status: error.response?.status,
+      statusText: error.response?.statusText,
       url: error.config?.url,
       method: error.config?.method,
-      data: error.response?.data
+      data: error.response?.data,
+      headers: error.response?.headers
     });
 
+    // Handle different types of auth errors
     if (error.response?.status === 401) {
-      console.warn('🔐 Unauthorized - clearing tokens');
+      const errorMessage = error.response?.data?.message || error.response?.data?.error;
       
-      if (typeof window !== 'undefined') {
-        // Clear both token storage locations
-        localStorage.removeItem('growahead_token');
+      // Only clear tokens if it's a real token expiration, not a password mismatch
+      if (errorMessage && (
+        errorMessage.includes('token') || 
+        errorMessage.includes('expired') || 
+        errorMessage.includes('invalid token') ||
+        errorMessage.includes('Access denied')
+      )) {
+        console.warn('🔐 Token-related unauthorized error - clearing tokens');
         
-        // Also clear the Zustand store auth data
-        const authStore = localStorage.getItem('growahead-auth-storage');
-        if (authStore) {
-          try {
-            const parsed = JSON.parse(authStore);
-            if (parsed?.state) {
-              parsed.state.token = null;
-              parsed.state.isAuthenticated = false;
-              parsed.state.user = null;
-              localStorage.setItem('growahead-auth-storage', JSON.stringify(parsed));
+        if (typeof window !== 'undefined') {
+          // Clear both token storage locations
+          localStorage.removeItem('growahead_token');
+          
+          // Also clear the Zustand store auth data
+          const authStore = localStorage.getItem('growahead-auth-storage');
+          if (authStore) {
+            try {
+              const parsed = JSON.parse(authStore);
+              if (parsed?.state) {
+                parsed.state.token = null;
+                parsed.state.isAuthenticated = false;
+                parsed.state.user = null;
+                localStorage.setItem('growahead-auth-storage', JSON.stringify(parsed));
+              }
+            } catch (e) {
+              console.error('Error clearing auth store:', e);
+              localStorage.removeItem('growahead-auth-storage');
             }
-          } catch (e) {
-            console.error('Error clearing auth store:', e);
-            localStorage.removeItem('growahead-auth-storage');
           }
         }
+      } else {
+        console.warn('🔐 Auth error but preserving token (likely password mismatch):', errorMessage);
       }
     }
     
@@ -264,16 +279,50 @@ export const authAPI = {
   },
 
   changePassword: async (currentPassword: string, newPassword: string) => {
-  console.log('🔐 Attempting password change'); // ADD THIS LINE
-  
-  const response = await api.put('/auth/password', { 
-    currentPassword, 
-    newPassword 
-  })
-  
-  console.log('🔐 Password change successful'); // ADD THIS LINE
-  return response.data
-},
+    console.log('🔐 Attempting password change with enhanced error handling');
+    
+    // Ensure we have a valid token before attempting
+    const token = getAuthToken();
+    if (!token) {
+      throw new Error('Authentication required. Please log in again.');
+    }
+    
+    console.log('🔐 Token validated, proceeding with password change');
+    
+    try {
+      const response = await api.put('/auth/password', { 
+        currentPassword, 
+        newPassword 
+      });
+      
+      console.log('🔐 Password change successful');
+      return response.data;
+      
+    } catch (error: any) {
+      console.error('🔐 Password change error:', error);
+      
+      // Enhanced error handling - don't clear token on password mismatch
+      if (error.response?.status === 401) {
+        const errorMessage = error.response?.data?.message || error.response?.data?.error;
+        
+        if (errorMessage?.includes('Current password is incorrect') || 
+            errorMessage?.includes('password is incorrect') ||
+            errorMessage?.includes('Invalid credentials')) {
+          console.log('🔐 Password mismatch - preserving auth token');
+          // Don't clear token, just re-throw the error
+          throw error;
+        } else if (errorMessage?.includes('token')) {
+          console.log('🔐 Token issue - clearing tokens');
+          // Clear tokens
+          localStorage.removeItem('growahead_token');
+          localStorage.removeItem('growahead-auth-storage');
+          throw new Error('Session expired. Please log in again.');
+        }
+      }
+      
+      throw error;
+    }
+  },
   
   deleteAccount: async (password: string) => {
   console.log('🔐 Attempting account deletion'); // ADD THIS LINE
