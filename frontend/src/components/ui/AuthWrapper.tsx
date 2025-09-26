@@ -54,7 +54,6 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
   
   const [showRegister, setShowRegister] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
-  const [showDemoAccount, setShowDemoAccount] = useState(false)
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -132,14 +131,6 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
-  // Fill test credentials
-  const fillTestCredentials = () => {
-    setFormData(prev => ({
-      ...prev,
-      email: 'test@growahead.com',
-      password: 'password123'
-    }))
-  }
 
   // Show loading until hydration
   if (!_hasHydrated || isLoading) {
@@ -393,56 +384,6 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
                         )}
                       </Button>
                     </form>
-
-                    {/* Demo Account Toggle (Login only) */}
-                    {!showRegister && (
-                      <div className="border border-slate-200 rounded-lg overflow-hidden">
-                        <button
-                          type="button"
-                          onClick={() => setShowDemoAccount(!showDemoAccount)}
-                          className="w-full px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors duration-200 flex items-center justify-between text-sm font-medium text-slate-700"
-                        >
-                          <div className="flex items-center space-x-2">
-                            {showDemoAccount ? (
-                              <ChevronDown className="h-4 w-4 text-slate-500" />
-                            ) : (
-                              <ChevronRight className="h-4 w-4 text-slate-500" />
-                            )}
-                            <span>Want to login using Demo account?</span>
-                          </div>
-                          <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-300 text-xs">
-                            Demo
-                          </Badge>
-                        </button>
-                        
-                        {showDemoAccount && (
-                          <div className="p-4 bg-blue-50 border-t border-blue-200">
-                            <div className="flex items-center justify-between mb-3">
-                              <span className="text-sm text-blue-700 font-medium">Test Credentials</span>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={fillTestCredentials}
-                                className="text-blue-600 border-blue-300 hover:bg-blue-100 h-7 text-xs px-3"
-                              >
-                                Auto-fill
-                              </Button>
-                            </div>
-                            <div className="space-y-2 text-sm">
-                              <div className="flex items-center justify-between">
-                                <span className="text-blue-600 font-medium w-20">Email:</span>
-                                <code className="bg-blue-100 px-2 py-1 rounded text-blue-800 flex-1 ml-2 text-center">test@growahead.com</code>
-                              </div>
-                              <div className="flex items-center justify-between">
-                                <span className="text-blue-600 font-medium w-20">Password:</span>
-                                <code className="bg-blue-100 px-2 py-1 rounded text-blue-800 flex-1 ml-2 text-center">password123</code>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
 
                     {/* Toggle between login/register */}
                     <div className="text-center pt-4 border-t border-slate-200">
