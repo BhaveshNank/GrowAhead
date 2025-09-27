@@ -1,74 +1,99 @@
-# GrowAhead - Micro-Investment Educational Platform
+# GrowAhead - Micro-Investment Tracker
 
-A full-stack fintech simulation platform that teaches investment concepts through automated round-up calculations and portfolio projections. Users can explore different investment strategies and understand the power of compound growth through an interactive, educational interface.
+A full-stack fintech platform that simulates micro-investing through automated round-up calculations and portfolio projections.
 
 ## Live Demo
+Frontend: https://growahead-beta.vercel.app  
+Backend (Render): https://growahead-backend.onrender.com  
+Backend (AWS): https://growahead-backend-dev.us-east-1.elasticbeanstalk.com  
 
-**Frontend:** [https://growahead-beta.vercel.app](https://growahead-beta.vercel.app)  
-**Backend API:** [https://growahead-backend.onrender.com](https://growahead-backend.onrender.com)
 
-## How It Works
+## Application Overview
 
-GrowAhead simulates the concept of micro-investing by:
+### Main Dashboard
+![Investment Dashboard](./images/dashboard.png)
 
-1. **Transaction Processing**: Users can manually add transactions or upload CSV files containing their spending data
-2. **Round-Up Calculations**: The platform automatically calculates "spare change" by rounding up each transaction to the nearest dollar
-3. **Investment Simulation**: Round-ups are virtually "invested" using one of three risk profiles:
-   - Conservative (5% annual return)
-   - Balanced (8% annual return) 
-   - Aggressive (12% annual return)
-4. **Portfolio Projections**: Interactive dashboards show potential growth over 1, 3, 5, and 10-year periods using compound interest calculations
-5. **Educational Analytics**: Users can compare different investment strategies and understand how consistent small investments can build substantial wealth over time
-
-## Key Features
-
-- **User Authentication**: Secure registration with email verification
-- **Transaction Management**: Add, edit, delete, and bulk import transactions via CSV
-- **Real-time Dashboards**: Interactive charts and visualizations using Recharts
-- **Financial Projections**: Time-weighted calculations with precision arithmetic
-- **Investment Strategy Comparison**: Side-by-side analysis of different risk profiles
-- **Mobile-Responsive Design**: Optimized for all device types
+### Portfolio Analytics
+![Portfolio Growth](./images/portfolio-growth.png)
 
 ## Tech Stack
+- Frontend: Next.js 15, TypeScript, TailwindCSS, Zustand, Recharts  
+- Backend: Node.js, Express, PostgreSQL, JWT Auth, SendGrid  
+- Deployment: Vercel, Render, AWS Elastic Beanstalk  
 
-**Frontend:**
-- Next.js 15 with TypeScript
-- TailwindCSS for styling
-- Zustand for state management
-- Recharts for data visualization
+## Features
 
-**Backend:**
-- Node.js with Express.js
-- PostgreSQL database
-- JWT authentication with email verification
-- Input validation with Joi
-- Rate limiting and security middleware
+### User Authentication
+![Email Verification](./images/email-verification.png)
+- User authentication with email verification  
 
-**Deployment:**
-- Frontend: Vercel
-- Backend: Render (primary) & AWS Elastic Beanstalk
-- Database: PostgreSQL on Render & AWS RDS
+### Investment Analysis
+![Category Analytics](./images/category-analytics.png)
+- Transaction management + CSV upload  
+- Automated round-up calculations  
+
+### Investment Projections
+![Investment Projections](./images/projections.png)
+![Investment Calculator](./images/calculator.png)
+![Risk Profile Comparison](./images/risk-comparison.png)
+- Investment projections with 3 risk profiles  
+- Real-time dashboards and analytics  
+
+### Transaction Management
+![Recent Transactions](./images/transactions.png)
+![CSV Upload](./images/csv-upload.png)
+
+### Account Management
+![Account Settings](./images/account-settings.png)
+
+
+## Setup
+
+### Backend
+cd Backend  
+npm install  
+cp .env.example .env  
+# Fill in DB + SendGrid credentials  
+npm start  
+# Initialize DB at:  
+http://localhost:5000/api/setup-database  
+
+### Frontend
+cd frontend  
+npm install  
+cp .env.example .env.local  
+# Set NEXT_PUBLIC_API_URL=http://localhost:5000  
+npm run dev  
+
+## Environment Variables
+
+### Backend (.env)
+DB_HOST=localhost  
+DB_PORT=5432  
+DB_NAME=growahead  
+DB_USER=your_username  
+DB_PASSWORD=your_password  
+JWT_SECRET=your-secret-key  
+SENDGRID_API_KEY=your-sendgrid-key  
+SENDER_EMAIL=noreply@yourdomain.com  
+PORT=5000  
+
+### Frontend (.env.local)
+NEXT_PUBLIC_API_URL=http://localhost:5000  
+
+## Features
+- User authentication with email verification  
+- Transaction management + CSV upload  
+- Automated round-up calculations  
+- Investment projections with 3 risk profiles  
+- Real-time dashboards and analytics  
 
 ## API Endpoints
+- /api/auth – Authentication  
+- /api/transactions – Transaction management  
+- /api/wallet – Wallet operations  
+- /api/projections – Investment calculations  
 
-The backend provides RESTful API endpoints for:
-- User authentication (`/api/auth`)
-- Transaction management (`/api/transactions`)
-- Wallet operations (`/api/wallet`)
-- Investment projections (`/api/projections`)
+---
 
-## Installation & Setup
-
-### Prerequisites
-- Node.js (v18+)
-- PostgreSQL database
-- SendGrid API key for email services
-
-### Backend Setup
-```bash
-cd Backend
-npm install
-cp .env.example .env
-# Configure environment variables
-npm start
-
+After setup, visit: http://localhost:3000
