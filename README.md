@@ -10,6 +10,9 @@ Backend (AWS): https://growahead-backend-dev.us-east-1.elasticbeanstalk.com
 
 ## Application Overview
 
+### Landing & Authentication
+![GrowAhead Landing Page](./images/landing.png)
+
 ### Main Dashboard
 ![Investment Dashboard](./images/dashboard.png)
 
