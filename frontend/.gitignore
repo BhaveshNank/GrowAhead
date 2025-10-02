@@ -36,4 +36,4 @@ yarn-error.log*
 # OS files
 .DS_Store
 *.pem
-Thumbs.db
+Thumbs.db.vercel
