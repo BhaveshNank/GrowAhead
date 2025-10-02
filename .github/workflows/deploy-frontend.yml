@@ -8,6 +8,7 @@ on:
       - completed  # Only run after CI completes
     branches:
       - main       # Only for main branch
+  workflow_dispatch:
 
 # Jobs define what tasks to run
 jobs:
