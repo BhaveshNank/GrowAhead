@@ -1,0 +1,73 @@
+name: Deploy Frontend to Vercel
+
+# When should this workflow run?
+on:
+  workflow_run:
+    workflows: ["🧪 Continuous Integration"]  # Wait for CI workflow
+    types:
+      - completed  # Only run after CI completes
+    branches:
+      - main       # Only for main branch
+
+# Jobs define what tasks to run
+jobs:
+  deploy:
+    name: 🌐 Deploy to Vercel
+    runs-on: ubuntu-latest
+    
+    # CRITICAL: Only deploy if CI tests passed!
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    
+    steps:
+      # Step 1: Get your code from GitHub
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      # Step 2: Set up Node.js environment
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      
+      # Step 3: Install Vercel CLI
+      - name: 📦 Install Vercel CLI
+        run: npm install --global vercel@latest
+      
+      # Step 4: Pull Vercel Environment Information
+      - name: 🔗 Pull Vercel Environment Information
+        working-directory: ./frontend
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+      
+      # Step 5: Build the project
+      - name: 🏗️ Build Project Artifacts
+        working-directory: ./frontend
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+      
+      # Step 6: Deploy to Vercel Production
+      - name: 🚀 Deploy to Vercel Production
+        working-directory: ./frontend
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+      
+      # Step 7: Log deployment success
+      - name: ✅ Deployment Complete
+        run: |
+          echo "🎉 Frontend successfully deployed to Vercel!"
+          echo "🌐 Your app is live at: https://growahead-beta.vercel.app"
+
+  # Job to handle failed CI
+  deploy-failed:
+    name: ⚠️ CI Tests Failed
+    runs-on: ubuntu-latest
+    
+    # Only run if CI tests failed
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    
+    steps:
+      - name: ❌ Deployment Blocked
+        run: |
+          echo "⚠️ Deployment blocked because CI tests failed!"
+          echo "🔧 Fix the failing tests and push again."
+          echo "📊 Check the CI workflow for details: ${{ github.event.workflow_run.html_url }}"
+          exit 1
