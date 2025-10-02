@@ -40,7 +40,7 @@ jobs:
       # Step 5: Upload test results (optional but useful for debugging)
       - name: 📊 Upload test results
         if: always()  # Run even if tests fail
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: backend-test-results
           path: Backend/test-results/
