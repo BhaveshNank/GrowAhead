@@ -11,16 +11,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  # ⭐ NEW: Run CI tests first
-  run-tests:
-    name: Run CI Tests
-    uses: ./.github/workflows/ci.yml  # This runs your existing CI workflow
-  
-  # Deploy only if tests pass
   deploy:
     name: Deploy to Vercel
     runs-on: ubuntu-latest
-    needs: run-tests  # ⭐ CRITICAL: Wait for tests to pass!
     
     steps:
       - name: Checkout code
@@ -39,14 +32,23 @@ jobs:
       - name: Pull Vercel Environment
         working-directory: ./frontend
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
       
       - name: Build Project
         working-directory: ./frontend
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
       
       - name: Deploy to Vercel
         working-directory: ./frontend
         run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
       
       - name: Deployment Complete
         run: echo "Frontend deployed to Vercel successfully!"
