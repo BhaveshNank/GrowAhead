@@ -11,9 +11,16 @@ on:
   workflow_dispatch:
 
 jobs:
+  # ⭐ NEW: Run CI tests first
+  run-tests:
+    name: Run CI Tests
+    uses: ./.github/workflows/ci.yml  # This runs your existing CI workflow
+  
+  # Deploy only if tests pass
   deploy:
     name: Deploy to Vercel
     runs-on: ubuntu-latest
+    needs: run-tests  # ⭐ CRITICAL: Wait for tests to pass!
     
     steps:
       - name: Checkout code
