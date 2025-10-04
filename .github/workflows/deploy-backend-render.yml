@@ -1,0 +1,50 @@
+name: Deploy Backend to Render
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'Backend/**'
+      - '.github/workflows/deploy-backend-render.yml'
+  workflow_dispatch:
+
+jobs:
+  test-and-trigger-deploy:
+    name: Test & Trigger Render Deploy
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: Backend/package-lock.json
+      
+      # Run tests first
+      - name: Install dependencies
+        working-directory: ./Backend
+        run: npm ci
+      
+      - name: Run backend tests
+        working-directory: ./Backend
+        run: npm test
+      
+      - name: Security audit
+        working-directory: ./Backend
+        run: npm audit --audit-level=moderate
+        continue-on-error: true
+      
+      # If tests pass, trigger Render deployment
+      - name: Trigger Render Deployment
+        if: success()
+        run: |
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+      
+      - name: Deployment Triggered
+        run: echo "Backend tests passed! Render deployment triggered."
