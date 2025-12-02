@@ -34,6 +34,7 @@ import GoalProgressTracker from '@/components/ui/GoalProgressTracker'
 import InvestmentProjections from '@/components/ui/InvestmentProjections'
 import NotificationSystem from '@/components/ui/NotificationSystem'
 import { InfoTooltip } from '@/components/ui/tooltip'
+import MoneyGrowthBreakdown from '@/components/ui/MoneyGrowthBreakdown'
 
 // Simplified User Dropdown Component
 function UserDropdown() {
@@ -176,6 +177,7 @@ function DashboardContent() {
   const totalContributions = walletData?.debug?.totalPrincipal || 0
   const totalGrowth = walletData?.debug?.totalGrowth || 0
   const roundupCount = walletData?.debug?.roundupCount || 0
+  const monthsActive = walletData?.debug?.monthsActive || 1
 
   // Mock monthly growth calculation (you can enhance this with real data)
   const monthlyGrowth = walletData?.summary?.monthlyGrowthRate || 0
@@ -333,6 +335,17 @@ function DashboardContent() {
                 </div>
               </CardContent>
             </Card>
+          </div>
+
+          {/* Money Growth Breakdown - Educational Card */}
+          <div className="mb-8">
+            <MoneyGrowthBreakdown
+              totalBalance={totalBalance}
+              totalContributions={totalContributions}
+              totalGrowth={totalGrowth}
+              roundupCount={roundupCount}
+              monthsActive={monthsActive}
+            />
           </div>
 
           {/* Quick Stats */}
