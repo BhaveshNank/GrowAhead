@@ -314,36 +314,36 @@ function DashboardContent() {
 
           {/* Quick Stats */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <Card className="hover:shadow-md transition-shadow border-2 border-emerald-100 bg-emerald-50/30">
+            <Card className="hover:shadow-md transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-emerald-700">
-                  Total Invested
+                <CardTitle className="text-sm font-medium text-slate-600">
+                  This Week
                 </CardTitle>
-                <Wallet className="h-4 w-4 text-emerald-600" />
+                <Calendar className="h-4 w-4 text-slate-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-emerald-900">
-                  ${totalContributions.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                <div className="text-2xl font-bold text-slate-900">
+                  ${thisWeekSavings.toFixed(2)}
                 </div>
-                <p className="text-xs text-emerald-700">
-                  Your roundup contributions
+                <p className="text-xs text-slate-600">
+                  Roundup savings
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="hover:shadow-md transition-shadow border-2 border-green-100 bg-green-50/30">
+            <Card className="hover:shadow-md transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-green-700">
-                  Total Growth
+                <CardTitle className="text-sm font-medium text-slate-600">
+                  This Month
                 </CardTitle>
-                <TrendingUp className="h-4 w-4 text-green-600" />
+                <TrendingUp className="h-4 w-4 text-slate-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-900">
-                  ${totalGrowth.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                <div className="text-2xl font-bold text-slate-900">
+                  ${thisMonthSavings.toFixed(2)}
                 </div>
-                <p className="text-xs text-green-700">
-                  Earnings from investments
+                <p className="text-xs text-slate-600">
+                  {monthlyGrowth > 0 ? '+' : ''}{monthlyGrowth.toFixed(0)}% growth
                 </p>
               </CardContent>
             </Card>
