@@ -20,7 +20,8 @@ import {
   User,
   Settings,
   ChevronDown,
-  Bell
+  Bell,
+  Lightbulb
 } from "lucide-react"
 import { useAuthStore } from '@/stores/authStore'
 import { useDashboardStore } from '@/stores/dashboardStore'
@@ -34,7 +35,7 @@ import GoalProgressTracker from '@/components/ui/GoalProgressTracker'
 import InvestmentProjections from '@/components/ui/InvestmentProjections'
 import NotificationSystem from '@/components/ui/NotificationSystem'
 import { InfoTooltip } from '@/components/ui/tooltip'
-import MoneyGrowthBreakdown from '@/components/ui/MoneyGrowthBreakdown'
+import MoneyGrowthModal from '@/components/ui/MoneyGrowthModal'
 
 // Simplified User Dropdown Component
 function UserDropdown() {
@@ -155,6 +156,7 @@ function DashboardContent() {
   // Modal states
   const [isAddTransactionOpen, setIsAddTransactionOpen] = useState(false)
   const [isCSVUploadOpen, setIsCSVUploadOpen] = useState(false)
+  const [isLearningModalOpen, setIsLearningModalOpen] = useState(false)
 
   useEffect(() => {
     console.log('Loading enhanced dashboard data...')
@@ -337,17 +339,6 @@ function DashboardContent() {
             </Card>
           </div>
 
-          {/* Money Growth Breakdown - Educational Card */}
-          <div className="mb-8">
-            <MoneyGrowthBreakdown
-              totalBalance={totalBalance}
-              totalContributions={totalContributions}
-              totalGrowth={totalGrowth}
-              roundupCount={roundupCount}
-              monthsActive={monthsActive}
-            />
-          </div>
-
           {/* Quick Stats */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <Card className="hover:shadow-md transition-shadow">
@@ -520,6 +511,18 @@ function DashboardContent() {
         </div>
       </div>
 
+      {/* Floating Learning Button */}
+      <button
+        onClick={() => setIsLearningModalOpen(true)}
+        className="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center group z-30"
+        aria-label="Learn how your money grows"
+      >
+        <Lightbulb className="h-6 w-6 group-hover:scale-110 transition-transform" />
+        <span className="absolute right-16 bg-slate-900 text-white px-3 py-2 rounded-lg text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+          💡 Learn How It Works
+        </span>
+      </button>
+
       {/* Modals */}
       <AddTransactionModal
         isOpen={isAddTransactionOpen}
@@ -531,6 +534,16 @@ function DashboardContent() {
         isOpen={isCSVUploadOpen}
         onClose={() => setIsCSVUploadOpen(false)}
         onSuccess={handleTransactionSuccess}
+      />
+
+      <MoneyGrowthModal
+        isOpen={isLearningModalOpen}
+        onClose={() => setIsLearningModalOpen(false)}
+        totalBalance={totalBalance}
+        totalContributions={totalContributions}
+        totalGrowth={totalGrowth}
+        roundupCount={roundupCount}
+        monthsActive={monthsActive}
       />
     </>
   )
