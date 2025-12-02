@@ -48,20 +48,20 @@ export default function MoneyGrowthModal({
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
           {/* Header */}
-          <div className="sticky top-0 bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-6 rounded-t-xl">
+          <div className="sticky top-0 bg-gradient-to-r from-slate-800 to-slate-700 text-white p-6 rounded-t-xl border-b border-slate-600">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur flex items-center justify-center">
-                  <Lightbulb className="h-6 w-6 text-white" />
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 rounded-lg bg-slate-700/50 backdrop-blur flex items-center justify-center border border-slate-600">
+                  <Lightbulb className="h-6 w-6 text-slate-200" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold">How Your Money Grows</h2>
-                  <p className="text-blue-100 text-sm">Understanding your ${totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} portfolio</p>
+                  <h2 className="text-2xl font-semibold tracking-tight">Understanding Your Portfolio</h2>
+                  <p className="text-slate-300 text-sm mt-0.5">Portfolio Value: ${totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                 </div>
               </div>
               <button
                 onClick={onClose}
-                className="text-white/80 hover:text-white transition-colors"
+                className="text-slate-300 hover:text-white transition-colors"
               >
                 <X className="h-6 w-6" />
               </button>
@@ -72,7 +72,7 @@ export default function MoneyGrowthModal({
           <div className="p-6 space-y-6">
             {/* Breakdown Section */}
             <div className="space-y-4">
-              <div className="flex items-start space-x-3 p-4 bg-emerald-50 rounded-lg border-2 border-emerald-200">
+              <div className="flex items-start space-x-4 p-5 bg-white rounded-lg border border-slate-200 shadow-sm">
                 <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
                   <DollarSign className="h-5 w-5 text-white" />
                 </div>
@@ -98,10 +98,10 @@ export default function MoneyGrowthModal({
                 </div>
               </div>
 
-              <div className={`flex items-start space-x-3 p-4 rounded-lg border-2 ${
-                hasGrowth ? 'bg-green-50 border-green-200' : 
-                hasLoss ? 'bg-red-50 border-red-200' : 
-                'bg-slate-50 border-slate-200'
+              <div className={`flex items-start space-x-4 p-5 bg-white rounded-lg border shadow-sm ${
+                hasGrowth ? 'border-green-200' : 
+                hasLoss ? 'border-red-200' : 
+                'border-slate-200'
               }`}>
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
                   hasGrowth ? 'bg-green-500' : 
@@ -154,24 +154,24 @@ export default function MoneyGrowthModal({
             </div>
 
             {/* Time Factor Section */}
-            <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-200">
-              <div className="flex items-start space-x-3">
-                <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
+            <div className="p-5 bg-slate-50 rounded-lg border border-slate-200">
+              <div className="flex items-start space-x-4">
+                <div className="w-10 h-10 rounded-full bg-slate-600 flex items-center justify-center flex-shrink-0">
                   <Clock className="h-5 w-5 text-white" />
                 </div>
                 <div className="flex-1">
-                  <h4 className="font-semibold text-slate-900 mb-2">⏱️ Time at Work</h4>
-                  <ul className="space-y-2 text-sm text-slate-700">
+                  <h4 className="font-semibold text-slate-900 mb-3">Time Factor</h4>
+                  <ul className="space-y-2.5 text-sm text-slate-700">
                     <li className="flex items-start">
-                      <span className="mr-2 text-blue-500">•</span>
+                      <span className="mr-2 text-slate-400">•</span>
                       <span>Older investments grow more than recent ones</span>
                     </li>
                     <li className="flex items-start">
-                      <span className="mr-2 text-blue-500">•</span>
+                      <span className="mr-2 text-slate-400">•</span>
                       <span>Your earliest roundups have had {monthsActive} {monthsActive === 1 ? 'month' : 'months'} to earn returns</span>
                     </li>
                     <li className="flex items-start">
-                      <span className="mr-2 text-blue-500">•</span>
+                      <span className="mr-2 text-slate-400">•</span>
                       <span>Recent transactions are just starting their growth journey</span>
                     </li>
                   </ul>
@@ -180,11 +180,13 @@ export default function MoneyGrowthModal({
             </div>
 
             {/* Key Insight Section */}
-            <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg border-2 border-amber-200">
-              <div className="flex items-start space-x-3">
-                <div className="text-3xl">💡</div>
+            <div className="p-5 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="flex items-start space-x-4">
+                <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
+                  <TrendingUp className="h-5 w-5 text-white" />
+                </div>
                 <div className="flex-1">
-                  <h4 className="font-semibold text-slate-900 mb-2">🎯 Key Insight</h4>
+                  <h4 className="font-semibold text-slate-900 mb-3">Key Insight</h4>
                   <p className="text-sm text-slate-700 leading-relaxed">
                     You've made <strong>{roundupCount} transactions</strong> without "feeling" the investment of{' '}
                     <strong className="text-emerald-700">
@@ -215,8 +217,8 @@ export default function MoneyGrowthModal({
             </div>
 
             {/* Mathematical Breakdown */}
-            <div className="p-4 bg-white rounded-lg border-2 border-slate-200">
-              <h4 className="font-semibold text-slate-900 mb-3">📐 The Math Behind Your Portfolio</h4>
+            <div className="p-5 bg-white rounded-lg border border-slate-200 shadow-sm">
+              <h4 className="font-semibold text-slate-900 mb-4">Portfolio Breakdown</h4>
               <div className="space-y-2 text-sm font-mono">
                 <div className="flex justify-between items-center p-3 bg-emerald-50 rounded">
                   <span className="text-slate-700">Your Contributions:</span>
@@ -248,12 +250,12 @@ export default function MoneyGrowthModal({
           </div>
 
           {/* Footer */}
-          <div className="sticky bottom-0 bg-slate-50 p-4 rounded-b-xl border-t">
+          <div className="sticky bottom-0 bg-white p-4 rounded-b-xl border-t border-slate-200">
             <Button 
               onClick={onClose}
-              className="w-full bg-blue-600 hover:bg-blue-700"
+              className="w-full bg-slate-800 hover:bg-slate-700 text-white"
             >
-              Got it! Close
+              Close
             </Button>
           </div>
         </div>
