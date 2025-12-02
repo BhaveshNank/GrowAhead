@@ -33,6 +33,7 @@ import SavingsTrendsChart from '@/components/ui/SavingsTrendsChart'
 import GoalProgressTracker from '@/components/ui/GoalProgressTracker'
 import InvestmentProjections from '@/components/ui/InvestmentProjections'
 import NotificationSystem from '@/components/ui/NotificationSystem'
+import { InfoTooltip } from '@/components/ui/tooltip'
 
 // Simplified User Dropdown Component
 function UserDropdown() {
@@ -274,7 +275,13 @@ function DashboardContent() {
               <CardContent className="p-8">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-slate-300 text-sm mb-2">Total Portfolio Value</p>
+                    <div className="flex items-center mb-2">
+                      <p className="text-slate-300 text-sm">Total Portfolio Value</p>
+                      <InfoTooltip 
+                        content="Your complete micro-investment portfolio value, including your roundup contributions plus any growth your investments have earned over time."
+                        className="text-slate-400 hover:text-slate-300"
+                      />
+                    </div>
                     <h2 className="text-5xl font-bold mb-3">
                       ${totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </h2>
@@ -284,12 +291,20 @@ function DashboardContent() {
                         <span className="text-sm font-medium">
                           ${totalContributions.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} invested
                         </span>
+                        <InfoTooltip 
+                          content="This is the actual money you've contributed through transaction roundups. Every purchase you make gets rounded up to the nearest dollar, and the spare change is your investment."
+                          className="text-emerald-300 hover:text-emerald-200"
+                        />
                       </div>
                       <div className="flex items-center text-green-400">
                         <TrendingUp className="h-4 w-4 mr-1" />
                         <span className="text-sm font-medium">
                           ${totalGrowth.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} growth
                         </span>
+                        <InfoTooltip 
+                          content="This is money your investments have earned over time. Your earlier investments have grown more because they've had more time to earn returns. This is the power of compound growth!"
+                          className="text-green-300 hover:text-green-200"
+                        />
                       </div>
                     </div>
                     <div className="flex items-center space-x-4">
@@ -299,10 +314,18 @@ function DashboardContent() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-slate-300 text-sm mb-2">Investment Strategy</p>
-                    <Badge className="bg-green-600/90 text-white mb-3 capitalize">
-                      {riskProfile} Portfolio
-                    </Badge>
+                    <div className="flex items-center justify-end mb-2">
+                      <p className="text-slate-300 text-sm">Investment Strategy</p>
+                      <InfoTooltip 
+                        content="Your risk profile determines your annual return rate. Conservative earns 5% (low risk), Balanced earns 8% (moderate risk), and Aggressive earns 12% (higher risk, higher potential returns)."
+                        className="text-slate-400 hover:text-slate-300"
+                      />
+                    </div>
+                    <div className="flex items-center justify-end">
+                      <Badge className="bg-green-600/90 text-white mb-3 capitalize">
+                        {riskProfile} Portfolio
+                      </Badge>
+                    </div>
                     <div className="text-slate-300 text-xs">
                       Projected 1yr: ${oneYearProjection.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </div>
@@ -316,9 +339,14 @@ function DashboardContent() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <Card className="hover:shadow-md transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-slate-600">
-                  This Week
-                </CardTitle>
+                <div className="flex items-center">
+                  <CardTitle className="text-sm font-medium text-slate-600">
+                    This Week
+                  </CardTitle>
+                  <InfoTooltip 
+                    content="Total roundup contributions you've made this week. This is money automatically invested from your daily transactions."
+                  />
+                </div>
                 <Calendar className="h-4 w-4 text-slate-600" />
               </CardHeader>
               <CardContent>
@@ -333,9 +361,14 @@ function DashboardContent() {
 
             <Card className="hover:shadow-md transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-slate-600">
-                  This Month
-                </CardTitle>
+                <div className="flex items-center">
+                  <CardTitle className="text-sm font-medium text-slate-600">
+                    This Month
+                  </CardTitle>
+                  <InfoTooltip 
+                    content="Your roundup contributions for this month. The growth percentage shows how much your total portfolio has grown this month through investment returns."
+                  />
+                </div>
                 <TrendingUp className="h-4 w-4 text-slate-600" />
               </CardHeader>
               <CardContent>
@@ -350,9 +383,14 @@ function DashboardContent() {
 
             <Card className="hover:shadow-md transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-slate-600">
-                  Monthly Avg
-                </CardTitle>
+                <div className="flex items-center">
+                  <CardTitle className="text-sm font-medium text-slate-600">
+                    Monthly Avg
+                  </CardTitle>
+                  <InfoTooltip 
+                    content="Your average monthly contribution since you started. This helps predict future portfolio growth and shows your consistent investing habit."
+                  />
+                </div>
                 <DollarSign className="h-4 w-4 text-slate-600" />
               </CardHeader>
               <CardContent>
@@ -367,9 +405,14 @@ function DashboardContent() {
 
             <Card className="hover:shadow-md transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-slate-600">
-                  Strategy
-                </CardTitle>
+                <div className="flex items-center">
+                  <CardTitle className="text-sm font-medium text-slate-600">
+                    Strategy
+                  </CardTitle>
+                  <InfoTooltip 
+                    content="Your current investment risk profile. You can change this in settings to adjust your expected returns and risk level."
+                  />
+                </div>
                 <Activity className="h-4 w-4 text-slate-600" />
               </CardHeader>
               <CardContent>
