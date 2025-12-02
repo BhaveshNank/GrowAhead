@@ -170,6 +170,11 @@ function DashboardContent() {
   const avgMonthlyContribution = walletData?.summary?.avgMonthlyContribution || 0
   const riskProfile = walletData?.investment?.riskProfile || 'balanced'
   const oneYearProjection = walletData?.investment?.projections?.oneYear || 0
+  
+  // Get total roundup contributions and growth from debug data
+  const totalContributions = walletData?.debug?.totalPrincipal || 0
+  const totalGrowth = walletData?.debug?.totalGrowth || 0
+  const roundupCount = walletData?.debug?.roundupCount || 0
 
   // Mock monthly growth calculation (you can enhance this with real data)
   const monthlyGrowth = walletData?.summary?.monthlyGrowthRate || 0
@@ -273,15 +278,23 @@ function DashboardContent() {
                     <h2 className="text-5xl font-bold mb-3">
                       ${totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </h2>
-                    <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-6 mb-3">
+                      <div className="flex items-center text-emerald-400">
+                        <DollarSign className="h-4 w-4 mr-1" />
+                        <span className="text-sm font-medium">
+                          ${totalContributions.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} invested
+                        </span>
+                      </div>
                       <div className="flex items-center text-green-400">
                         <TrendingUp className="h-4 w-4 mr-1" />
                         <span className="text-sm font-medium">
-                          {monthlyGrowth > 0 ? '+' : ''}{monthlyGrowth.toFixed(1)}% this month
+                          ${totalGrowth.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} growth
                         </span>
                       </div>
+                    </div>
+                    <div className="flex items-center space-x-4">
                       <div className="text-slate-300 text-sm">
-                        ${thisMonthSavings.toFixed(2)} added this month
+                        {roundupCount} transactions • {monthlyGrowth > 0 ? '+' : ''}{monthlyGrowth.toFixed(1)}% this month
                       </div>
                     </div>
                   </div>
@@ -301,36 +314,36 @@ function DashboardContent() {
 
           {/* Quick Stats */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <Card className="hover:shadow-md transition-shadow">
+            <Card className="hover:shadow-md transition-shadow border-2 border-emerald-100 bg-emerald-50/30">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-slate-600">
-                  This Week
+                <CardTitle className="text-sm font-medium text-emerald-700">
+                  Total Invested
                 </CardTitle>
-                <Calendar className="h-4 w-4 text-slate-600" />
+                <Wallet className="h-4 w-4 text-emerald-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-slate-900">
-                  ${thisWeekSavings.toFixed(2)}
+                <div className="text-2xl font-bold text-emerald-900">
+                  ${totalContributions.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
-                <p className="text-xs text-slate-600">
-                  Roundup savings
+                <p className="text-xs text-emerald-700">
+                  Your roundup contributions
                 </p>
               </CardContent>
             </Card>
 
-            <Card className="hover:shadow-md transition-shadow">
+            <Card className="hover:shadow-md transition-shadow border-2 border-green-100 bg-green-50/30">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-slate-600">
-                  This Month
+                <CardTitle className="text-sm font-medium text-green-700">
+                  Total Growth
                 </CardTitle>
-                <TrendingUp className="h-4 w-4 text-slate-600" />
+                <TrendingUp className="h-4 w-4 text-green-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-slate-900">
-                  ${thisMonthSavings.toFixed(2)}
+                <div className="text-2xl font-bold text-green-900">
+                  ${totalGrowth.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
-                <p className="text-xs text-slate-600">
-                  {monthlyGrowth > 0 ? '+' : ''}{monthlyGrowth.toFixed(0)}% growth
+                <p className="text-xs text-green-700">
+                  Earnings from investments
                 </p>
               </CardContent>
             </Card>
