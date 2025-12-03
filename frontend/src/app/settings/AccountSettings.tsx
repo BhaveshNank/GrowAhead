@@ -19,15 +19,17 @@ import {
   Settings,
   Mail,
   Calendar,
-  CheckCircle
+  CheckCircle,
+  TrendingUp
 } from "lucide-react"
 import { useAuthStore } from '@/stores/authStore'
 import { authAPI } from '@/lib/api'
 import AuthWrapper from '@/components/ui/AuthWrapper'
+import ChangeRiskProfileModal from '@/components/ui/ChangeRiskProfileModal'
 
 function AccountSettingsContent() {
   const router = useRouter()
-  const { user, logout } = useAuthStore()
+  const { user, logout, setUser } = useAuthStore()
   const [isChangingPassword, setIsChangingPassword] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -37,6 +39,8 @@ function AccountSettingsContent() {
     new: false,
     confirm: false
   })
+  const [isChangeRiskProfileOpen, setIsChangeRiskProfileOpen] = useState(false)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   // Form states
   const [passwordForm, setPasswordForm] = useState({
@@ -248,6 +252,20 @@ function AccountSettingsContent() {
 
   const currentProfile = riskProfiles[user?.riskProfile as keyof typeof riskProfiles] || riskProfiles.balanced
 
+  const handleRiskProfileChange = async () => {
+    // Refresh user data
+    try {
+      const userData = await authAPI.getCurrentUser()
+      setUser(userData.user)
+      setSuccessMessage('Investment strategy updated successfully! Your portfolio has been recalculated.')
+      setTimeout(() => setSuccessMessage(null), 5000)
+      // Optionally refresh the page to show updated portfolio
+      setTimeout(() => router.push('/'), 1000)
+    } catch (error) {
+      console.error('Error refreshing user data:', error)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-slate-50/50">
       {/* Header */}
@@ -275,6 +293,29 @@ function AccountSettingsContent() {
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="space-y-8">
+          {/* Success Message */}
+          {successMessage && (
+            <Card className="border-green-200 bg-green-50">
+              <CardContent className="p-4">
+                <div className="flex items-start space-x-3">
+                  <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-sm text-green-800 font-medium">Success</p>
+                    <p className="text-sm text-green-700 mt-1">{successMessage}</p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSuccessMessage(null)}
+                    className="text-green-600 hover:text-green-800 p-1"
+                  >
+                    ✕
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Global Error Display */}
           {apiError && (
             <Card className="border-red-200 bg-red-50">
@@ -333,16 +374,28 @@ function AccountSettingsContent() {
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center space-x-2">
                     <Shield className="h-4 w-4 text-slate-600" />
-                    <span className="font-medium text-slate-900">Investment Profile</span>
+                    <span className="font-medium text-slate-900">Investment Strategy</span>
                   </div>
                   <Badge className={currentProfile.color}>
                     {currentProfile.label}
                   </Badge>
                 </div>
                 <p className="text-sm text-slate-600">{currentProfile.description}</p>
-                <p className="text-xs text-slate-500 mt-2">
-                  To change your investment strategy, contact our support team or use the investment settings in your dashboard.
-                </p>
+                <div className="mt-3">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      setIsChangeRiskProfileOpen(true)
+                      clearError()
+                    }}
+                    disabled={isLoading}
+                    className="w-full flex items-center justify-center"
+                  >
+                    <TrendingUp className="h-4 w-4 mr-2" />
+                    Change Investment Strategy
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -601,6 +654,14 @@ function AccountSettingsContent() {
           </Card>
         </div>
       </div>
+
+      {/* Risk Profile Change Modal */}
+      <ChangeRiskProfileModal
+        isOpen={isChangeRiskProfileOpen}
+        currentProfile={user?.riskProfile as 'conservative' | 'balanced' | 'aggressive'}
+        onClose={() => setIsChangeRiskProfileOpen(false)}
+        onSuccess={handleRiskProfileChange}
+      />
     </div>
   )
 }

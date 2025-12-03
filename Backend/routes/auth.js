@@ -467,6 +467,167 @@ router.get('/me', authenticateToken, async (req, res) => {
     }
 });
 
+// PUT /auth/profile - Update user profile (name and/or risk profile with recalculation)
+router.put('/profile', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const { name, riskProfile } = req.body;
+
+        console.log('📝 Profile update request for user:', userId);
+
+        // Validation
+        const profileSchema = Joi.object({
+            name: Joi.string().min(2).max(100).optional(),
+            riskProfile: Joi.string().valid('conservative', 'balanced', 'aggressive').optional()
+        }).min(1); // At least one field required
+
+        const { error } = profileSchema.validate({ name, riskProfile });
+        if (error) {
+            return res.status(400).json({
+                error: 'Validation Error',
+                details: error.details.map(d => d.message)
+            });
+        }
+
+        // Get current user data
+        const userResult = await req.db.query(
+            'SELECT id, name, email, risk_profile, email_verified, created_at FROM users WHERE id = $1',
+            [userId]
+        );
+
+        if (userResult.rows.length === 0) {
+            return res.status(404).json({
+                error: 'User not found',
+                message: 'User account not found'
+            });
+        }
+
+        const currentUser = userResult.rows[0];
+        const oldRiskProfile = currentUser.risk_profile;
+
+        // Build update query dynamically
+        const updates = [];
+        const values = [];
+        let paramCount = 1;
+
+        if (name !== undefined) {
+            updates.push(`name = ${paramCount}`);
+            values.push(name);
+            paramCount++;
+        }
+
+        if (riskProfile !== undefined) {
+            updates.push(`risk_profile = ${paramCount}`);
+            values.push(riskProfile);
+            paramCount++;
+        }
+
+        updates.push(`updated_at = CURRENT_TIMESTAMP`);
+        values.push(userId);
+
+        // Update user profile
+        const updateQuery = `UPDATE users SET ${updates.join(', ')} WHERE id = ${paramCount} RETURNING id, name, email, risk_profile, email_verified, created_at`;
+        const updateResult = await req.db.query(updateQuery, values);
+
+        const updatedUser = updateResult.rows[0];
+
+        // If risk profile changed, recalculate ALL roundup growth
+        let recalculationInfo = null;
+        if (riskProfile && riskProfile !== oldRiskProfile) {
+            console.log(`📊 Risk profile changed from ${oldRiskProfile} to ${riskProfile} - recalculating portfolio...`);
+
+            // Get growth rate mapping
+            const rateMap = {
+                'conservative': 0.05,  // 5% annual
+                'balanced': 0.08,      // 8% annual
+                'aggressive': 0.12     // 12% annual
+            };
+
+            const newAnnualRate = rateMap[riskProfile];
+            const dailyRate = newAnnualRate / 365;
+
+            // Get all roundups for this user
+            const roundupsResult = await req.db.query(
+                `SELECT r.id, r.roundup_amount, r.created_at, t.transaction_date
+                 FROM roundups r
+                 JOIN transactions t ON r.transaction_id = t.id
+                 WHERE r.user_id = $1`,
+                [userId]
+            );
+
+            const roundups = roundupsResult.rows;
+            let totalOldValue = 0;
+            let totalNewValue = 0;
+
+            // Recalculate each roundup
+            for (const roundup of roundups) {
+                const investmentDate = new Date(roundup.transaction_date || roundup.created_at);
+                const currentDate = new Date();
+                const daysInvested = Math.floor((currentDate - investmentDate) / (1000 * 60 * 60 * 24));
+
+                // Old value (read from database before update)
+                const oldValueResult = await req.db.query(
+                    'SELECT current_value FROM roundups WHERE id = $1',
+                    [roundup.id]
+                );
+                const oldValue = oldValueResult.rows[0]?.current_value || parseFloat(roundup.roundup_amount);
+                totalOldValue += oldValue;
+
+                // Calculate new value with new rate
+                const principal = parseFloat(roundup.roundup_amount);
+                const newValue = principal * Math.pow(1 + dailyRate, daysInvested);
+                totalNewValue += newValue;
+
+                // Update roundup with new current_value
+                await req.db.query(
+                    'UPDATE roundups SET current_value = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+                    [newValue.toFixed(2), roundup.id]
+                );
+            }
+
+            // Update wallet total balance
+            await req.db.query(
+                'UPDATE wallet SET total_balance = $1, last_updated = CURRENT_TIMESTAMP WHERE user_id = $2',
+                [totalNewValue.toFixed(2), userId]
+            );
+
+            recalculationInfo = {
+                roundupsRecalculated: roundups.length,
+                oldTotalValue: totalOldValue.toFixed(2),
+                newTotalValue: totalNewValue.toFixed(2),
+                difference: (totalNewValue - totalOldValue).toFixed(2),
+                oldRiskProfile: oldRiskProfile,
+                newRiskProfile: riskProfile
+            };
+
+            console.log(`📊 Portfolio recalculation complete:`, recalculationInfo);
+        }
+
+        res.json({
+            success: true,
+            message: riskProfile && riskProfile !== oldRiskProfile 
+                ? 'Profile updated and portfolio recalculated successfully'
+                : 'Profile updated successfully',
+            user: {
+                id: updatedUser.id,
+                name: updatedUser.name,
+                email: updatedUser.email,
+                emailVerified: updatedUser.email_verified,
+                riskProfile: updatedUser.risk_profile,
+                createdAt: updatedUser.created_at
+            },
+            recalculation: recalculationInfo
+        });
+
+    } catch (error) {
+        console.error('📝 Profile update error:', error);
+        res.status(500).json({
+            error: 'Profile update failed',
+            message: 'An error occurred while updating your profile: ' + error.message
+        });
+    }
+});
+
 // PUT /auth/password - Change password
 router.put('/password', authenticateToken, async (req, res) => {
     try {

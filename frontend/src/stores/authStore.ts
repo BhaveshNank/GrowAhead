@@ -24,6 +24,7 @@ interface AuthState {
   verifyEmail: (email: string, otp: string) => Promise<boolean>;
   resendVerification: (email: string) => Promise<boolean>;
   logout: () => void;
+  setUser: (user: User) => void;
   clearError: () => void;
   clearPendingVerification: () => void;
   setHasHydrated: (hasHydrated: boolean) => void;
@@ -53,6 +54,9 @@ export const useAuthStore = create<AuthState>()(
       setHasHydrated: (hasHydrated: boolean) => {
         set({ _hasHydrated: hasHydrated });
       },
+
+      // Set user (for updates)
+      setUser: (user: User) => set({ user }),
 
       // Clear error messages
       clearError: () => set({ error: null }),
