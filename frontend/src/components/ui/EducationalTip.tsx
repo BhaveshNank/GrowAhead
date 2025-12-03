@@ -33,8 +33,9 @@ export default function EducationalTip({
 
   // Determine user's portfolio stage
   const getPortfolioStage = (): 'beginner' | 'intermediate' | 'advanced' => {
-    if (totalContributions < 10) return 'beginner'
-    if (totalContributions < 100) return 'intermediate'
+    const contributions = Number(totalContributions) || 0
+    if (contributions < 10) return 'beginner'
+    if (contributions < 100) return 'intermediate'
     return 'advanced'
   }
 
@@ -51,7 +52,7 @@ export default function EducationalTip({
     {
       id: 'compound-interest',
       title: 'The Power of Compound Interest',
-      content: `Your $${totalContributions.toFixed(2)} investment isn't just sitting idle - it's earning returns. And those returns will earn returns too. This compounding effect is why your portfolio has grown to $${totalBalance.toFixed(2)}.`,
+      content: `Your ${Number(totalContributions || 0).toFixed(2)} investment isn't just sitting idle - it's earning returns. And those returns will earn returns too. This compounding effect is why your portfolio has grown to ${Number(totalBalance || 0).toFixed(2)}.`,
       stage: 'intermediate'
     },
     {
@@ -69,31 +70,31 @@ export default function EducationalTip({
     {
       id: 'risk-return',
       title: 'Understanding Risk & Return',
-      content: `Your ${riskProfile} portfolio aims for ${getReturnRate()} annual returns. Conservative (5%) is safer but slower. Balanced (8%) offers steady growth. Aggressive (12%) targets higher returns with more volatility.`,
+      content: `Your ${riskProfile || 'balanced'} portfolio aims for ${getReturnRate()} annual returns. Conservative (5%) is safer but slower. Balanced (8%) offers steady growth. Aggressive (12%) targets higher returns with more volatility.`,
       stage: 'all'
     },
     {
       id: 'micro-investing',
       title: 'The Magic of Micro-Investing',
-      content: `You've made ${roundupCount} transactions without "feeling" the investment of $${totalContributions.toFixed(2)}. This proves that small, consistent amounts can build wealth without impacting your daily life.`,
+      content: `You've made ${roundupCount || 0} transactions without "feeling" the investment of ${Number(totalContributions || 0).toFixed(2)}. This proves that small, consistent amounts can build wealth without impacting your daily life.`,
       stage: 'beginner'
     },
     {
       id: 'consistency',
       title: 'Consistency Beats Timing',
-      content: `You've been investing for ${monthsActive} ${monthsActive === 1 ? 'month' : 'months'}. Regular, consistent investing typically outperforms trying to time the market. Keep going!`,
+      content: `You've been investing for ${monthsActive || 0} ${monthsActive === 1 ? 'month' : 'months'}. Regular, consistent investing typically outperforms trying to time the market. Keep going!`,
       stage: 'intermediate'
     },
     {
       id: 'patience',
       title: 'Investment Growth Takes Time',
-      content: `Your $${totalGrowth.toFixed(2)} in growth might seem small now, but compound interest accelerates over time. In 10 years, your current balance could more than double at ${getReturnRate()} annual returns.`,
+      content: `Your ${Number(totalGrowth || 0).toFixed(2)} in growth might seem small now, but compound interest accelerates over time. In 10 years, your current balance could more than double at ${getReturnRate()} annual returns.`,
       stage: 'intermediate'
     },
     {
       id: 'starting-small',
       title: 'Every Journey Starts Small',
-      content: `Your current portfolio of $${totalBalance.toFixed(2)} started with just spare change. The hardest part is starting - and you've already done it. Now time will do the heavy lifting.`,
+      content: `Your current portfolio of ${Number(totalBalance || 0).toFixed(2)} started with just spare change. The hardest part is starting - and you've already done it. Now time will do the heavy lifting.`,
       stage: 'beginner'
     },
     {
