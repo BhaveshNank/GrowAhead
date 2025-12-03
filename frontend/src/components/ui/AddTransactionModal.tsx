@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DateInput } from '@/components/ui/date-input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -232,9 +233,8 @@ export default function AddTransactionModal({ isOpen, onClose, onSuccess }: AddT
             {/* Transaction Date */}
             <div className="space-y-2">
               <Label htmlFor="transactionDate">Transaction Date</Label>
-              <Input
+              <DateInput
                 id="transactionDate"
-                type="date"
                 value={formData.transactionDate}
                 onChange={(e) => handleInputChange('transactionDate', e.target.value)}
                 disabled={isLoading}

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { DateInput } from '@/components/ui/date-input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -260,15 +261,15 @@ function TransactionsPageContent() {
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                {/* Improved Back Button */}
+                {/* Improved Back Button with both icons */}
                 <Button
                   variant="outline"
-                  size="sm"
                   onClick={() => router.push('/')}
-                  className="flex items-center hover:bg-slate-100 transition-all"
+                  className="flex items-center gap-2 hover:bg-slate-100 transition-all hover:shadow-sm group"
                 >
-                  <Home className="h-4 w-4 mr-2" />
-                  <span className="font-medium">Dashboard</span>
+                  <ArrowLeft className="h-4 w-4 text-slate-600 group-hover:text-slate-900 transition-colors" />
+                  <Home className="h-4 w-4 text-slate-600 group-hover:text-slate-900 transition-colors" />
+                  <span className="font-medium text-slate-700 group-hover:text-slate-900 transition-colors">Dashboard</span>
                 </Button>
                 <div className="border-l border-slate-300 h-8"></div>
                 <div>
@@ -362,22 +363,22 @@ function TransactionsPageContent() {
                   </Select>
                 </div>
 
-                {/* Date Range */}
+                {/* Date Range - with improved styling */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-700">Start Date</label>
-                  <Input
-                    type="date"
+                  <DateInput
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
+                    placeholder="Select start date"
                   />
                 </div>
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-700">End Date</label>
-                  <Input
-                    type="date"
+                  <DateInput
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
+                    placeholder="Select end date"
                   />
                 </div>
               </div>
