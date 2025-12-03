@@ -33,7 +33,7 @@ function AccountSettingsContent() {
   const [isChangingPassword, setIsChangingPassword] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [apiError, setApiError] = useState<string | null>(null) // For showing API errors
+  const [apiError, setApiError] = useState<string | null>(null)
   const [showPasswords, setShowPasswords] = useState({
     current: false,
     new: false,
@@ -54,7 +54,6 @@ function AccountSettingsContent() {
     confirmPassword: ''
   })
 
-  // Get user initials for avatar
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -64,12 +63,10 @@ function AccountSettingsContent() {
       .slice(0, 2)
   }
 
-  // Clear any API errors
   const clearError = () => {
     setApiError(null)
   }
 
-  // Enhanced error message extraction
   const getErrorMessage = (error: any): string => {
     console.error('🔐 Full error details:', {
       error: error,
@@ -78,12 +75,10 @@ function AccountSettingsContent() {
       data: error?.response?.data
     })
 
-    // Check for response data message first
     if (error?.response?.data?.message) {
       return error.response.data.message
     }
 
-    // Check for specific status codes
     if (error?.response?.status) {
       const status = error.response.status
       switch (status) {
@@ -102,12 +97,10 @@ function AccountSettingsContent() {
       }
     }
 
-    // Network errors
     if (error?.request) {
       return 'Network error. Please check your internet connection.'
     }
 
-    // Generic error
     if (error?.message) {
       return `Error: ${error.message}`
     }
@@ -119,7 +112,6 @@ function AccountSettingsContent() {
     e.preventDefault()
     clearError()
     
-    // Client-side validation
     if (!passwordForm.currentPassword.trim()) {
       setApiError('Please enter your current password')
       return
@@ -157,12 +149,10 @@ function AccountSettingsContent() {
       
       console.log('🔐 Password change successful:', result)
       
-      // Success! Clear form and show success
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
       setIsChangingPassword(false)
       setApiError(null)
       
-      // Show success message
       alert('✅ Password changed successfully!')
       
     } catch (error: any) {
@@ -171,8 +161,6 @@ function AccountSettingsContent() {
       const errorMessage = getErrorMessage(error)
       setApiError(errorMessage)
       
-      // Don't clear the form on error - let user retry
-      // Just clear the current password for security
       setPasswordForm(prev => ({ ...prev, currentPassword: '' }))
       
     } finally {
@@ -184,7 +172,6 @@ function AccountSettingsContent() {
     e.preventDefault()
     clearError()
 
-    // Client-side validation
     if (!deleteForm.confirmEmail.trim()) {
       setApiError('Please enter your email address')
       return
@@ -200,7 +187,6 @@ function AccountSettingsContent() {
       return
     }
 
-    // Final confirmation dialog
     const finalConfirmation = prompt(
       '⚠️ FINAL WARNING: Are you absolutely sure you want to permanently delete your account?\n\n' +
       'This will:\n' +
@@ -225,7 +211,6 @@ function AccountSettingsContent() {
       
       console.log('🗑️ Account deletion successful')
       
-      // Success - logout and redirect
       alert('✅ Account deleted successfully. Redirecting to home page...')
       logout()
       router.push('/')
@@ -236,7 +221,6 @@ function AccountSettingsContent() {
       const errorMessage = getErrorMessage(error)
       setApiError(errorMessage)
       
-      // Clear password for security but keep email
       setDeleteForm(prev => ({ ...prev, confirmPassword: '' }))
       
     } finally {
@@ -253,24 +237,15 @@ function AccountSettingsContent() {
   const currentProfile = riskProfiles[user?.riskProfile as keyof typeof riskProfiles] || riskProfiles.balanced
 
   const handleRiskProfileChange = async () => {
-    console.log('👍 Risk profile change confirmed, refreshing user data...')
-    // Refresh user data
-    try {
-      const userData = await authAPI.getCurrentUser()
-      console.log('👍 Updated user data:', userData)
-      setUser(userData.user)
-      setSuccessMessage('Investment strategy updated successfully! Your portfolio has been recalculated.')
-      setIsChangeRiskProfileOpen(false)
-      
-      // Show success message for 3 seconds, then redirect
-      setTimeout(() => {
-        console.log('👍 Redirecting to dashboard...')
-        router.push('/')
-      }, 2000)
-    } catch (error) {
-      console.error('👍 Error refreshing user data:', error)
-      setApiError('Profile updated but failed to refresh. Please refresh the page.')
-    }
+    console.log('👍 Risk profile change confirmed, reloading page...')
+    setIsChangeRiskProfileOpen(false)
+    setSuccessMessage('Investment strategy updated successfully! Refreshing page...')
+    
+    // Force a full page reload to ensure all data is fresh
+    setTimeout(() => {
+      console.log('👍 Reloading page...')
+      window.location.reload()
+    }, 1000)
   }
 
   return (
@@ -310,14 +285,6 @@ function AccountSettingsContent() {
                     <p className="text-sm text-green-800 font-medium">Success</p>
                     <p className="text-sm text-green-700 mt-1">{successMessage}</p>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSuccessMessage(null)}
-                    className="text-green-600 hover:text-green-800 p-1"
-                  >
-                    ✕
-                  </Button>
                 </div>
               </CardContent>
             </Card>
