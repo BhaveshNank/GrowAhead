@@ -79,11 +79,22 @@ export default function ChangeRiskProfileModal({
     setError(null)
 
     try {
-      await authAPI.updateProfile({ riskProfile: selectedProfile })
-      onSuccess?.()
-      onClose()
+      console.log('📊 Changing risk profile from', currentProfile, 'to', selectedProfile)
+      
+      const response = await authAPI.updateProfile({ riskProfile: selectedProfile })
+      
+      console.log('📊 Profile update response:', response)
+      
+      if (response.success) {
+        console.log('📊 Profile updated successfully, calling onSuccess')
+        onSuccess?.()
+        onClose()
+      } else {
+        throw new Error(response.message || 'Failed to update profile')
+      }
     } catch (err: any) {
-      setError(err.response?.data?.error || err.message || 'Failed to update investment strategy')
+      console.error('📊 Profile update error:', err)
+      setError(err.response?.data?.error || err.response?.data?.message || err.message || 'Failed to update investment strategy')
     } finally {
       setIsLoading(false)
     }
@@ -96,7 +107,7 @@ export default function ChangeRiskProfileModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <Card className="w-full max-w-2xl my-8">
+      <Card className="w-full max-w-2xl my-8 max-h-[90vh] flex flex-col">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <CardTitle className="flex items-center text-lg">
             <TrendingUp className="h-5 w-5 mr-2" />
@@ -112,7 +123,7 @@ export default function ChangeRiskProfileModal({
             <X className="h-4 w-4" />
           </Button>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 overflow-y-auto px-6" style={{ maxHeight: 'calc(90vh - 180px)' }}>
           {error && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
@@ -263,7 +274,7 @@ export default function ChangeRiskProfileModal({
           )}
 
           {/* Actions */}
-          <div className="flex space-x-2 pt-4">
+          <div className="flex space-x-2 pt-4 pb-2">
             <Button
               type="button"
               variant="outline"

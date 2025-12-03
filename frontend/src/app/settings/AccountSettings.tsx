@@ -253,16 +253,23 @@ function AccountSettingsContent() {
   const currentProfile = riskProfiles[user?.riskProfile as keyof typeof riskProfiles] || riskProfiles.balanced
 
   const handleRiskProfileChange = async () => {
+    console.log('👍 Risk profile change confirmed, refreshing user data...')
     // Refresh user data
     try {
       const userData = await authAPI.getCurrentUser()
+      console.log('👍 Updated user data:', userData)
       setUser(userData.user)
       setSuccessMessage('Investment strategy updated successfully! Your portfolio has been recalculated.')
-      setTimeout(() => setSuccessMessage(null), 5000)
-      // Optionally refresh the page to show updated portfolio
-      setTimeout(() => router.push('/'), 1000)
+      setIsChangeRiskProfileOpen(false)
+      
+      // Show success message for 3 seconds, then redirect
+      setTimeout(() => {
+        console.log('👍 Redirecting to dashboard...')
+        router.push('/')
+      }, 2000)
     } catch (error) {
-      console.error('Error refreshing user data:', error)
+      console.error('👍 Error refreshing user data:', error)
+      setApiError('Profile updated but failed to refresh. Please refresh the page.')
     }
   }
 
