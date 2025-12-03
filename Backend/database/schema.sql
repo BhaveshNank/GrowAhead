@@ -45,7 +45,9 @@ CREATE TABLE roundups (
     transaction_id INTEGER REFERENCES transactions(id) ON DELETE CASCADE,
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
     roundup_amount DECIMAL(10,2) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    current_value DECIMAL(10,2) DEFAULT 0.00,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Wallet table (user's total savings)
@@ -79,7 +81,7 @@ CREATE INDEX idx_email_verifications_otp ON email_verifications(otp_code, expire
 
 -- Function to update wallet balance after roundup insertion
 CREATE OR REPLACE FUNCTION update_wallet_balance()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER AS $
 BEGIN
     INSERT INTO wallet (user_id, total_balance, last_updated)
     VALUES (NEW.user_id, NEW.roundup_amount, CURRENT_TIMESTAMP)
@@ -90,13 +92,30 @@ BEGIN
     
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$ LANGUAGE plpgsql;
+
+-- Function to initialize current_value for new roundups
+CREATE OR REPLACE FUNCTION initialize_roundup_current_value()
+RETURNS TRIGGER AS $
+BEGIN
+    IF NEW.current_value IS NULL OR NEW.current_value = 0 THEN
+        NEW.current_value = NEW.roundup_amount;
+    END IF;
+    RETURN NEW;
+END;
+$ LANGUAGE plpgsql;
 
 -- Trigger to automatically update wallet when roundup is added
 CREATE TRIGGER trigger_update_wallet
     AFTER INSERT ON roundups
     FOR EACH ROW
     EXECUTE FUNCTION update_wallet_balance();
+
+-- Trigger to initialize current_value when roundup is created
+CREATE TRIGGER trigger_initialize_roundup_value
+    BEFORE INSERT ON roundups
+    FOR EACH ROW
+    EXECUTE FUNCTION initialize_roundup_current_value();
 
 -- Function to update user updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()

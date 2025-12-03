@@ -570,7 +570,7 @@ router.put('/profile', authenticateToken, async (req, res) => {
                     'SELECT current_value FROM roundups WHERE id = $1',
                     [roundup.id]
                 );
-                const oldValue = oldValueResult.rows[0]?.current_value || parseFloat(roundup.roundup_amount);
+                const oldValue = parseFloat(oldValueResult.rows[0]?.current_value || roundup.roundup_amount);
                 totalOldValue += oldValue;
 
                 // Calculate new value with new rate
