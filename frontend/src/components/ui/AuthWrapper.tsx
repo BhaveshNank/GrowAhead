@@ -28,7 +28,8 @@ import {
   ChevronRight,
   BookOpen,
   BarChart3,
-  GraduationCap
+  GraduationCap,
+  PlayCircle
 } from 'lucide-react'
 
 interface AuthWrapperProps {
@@ -268,6 +269,41 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
                         <AlertCircle className="h-4 w-4 text-red-500 mr-2" />
                         <span className="text-sm text-red-700">{error}</span>
                       </div>
+                    )}
+
+                    {/* Demo Account Button - Only show on login page */}
+                    {!showRegister && (
+                      <>
+                        <div className="space-y-2">
+                          <Button
+                            type="button"
+                            onClick={() => {
+                              setFormData({
+                                ...formData,
+                                email: 'demo@growahead.com',
+                                password: 'Demo123!'
+                              })
+                            }}
+                            className="w-full h-12 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium shadow-md hover:shadow-lg transition-all duration-200"
+                          >
+                            <PlayCircle className="h-5 w-5 mr-2" />
+                            Try Demo Account (No Signup Required)
+                          </Button>
+                          <p className="text-center text-xs text-slate-500">
+                            Explore GrowAhead with pre-loaded sample data
+                          </p>
+                        </div>
+
+                        {/* Divider */}
+                        <div className="relative">
+                          <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-slate-200"></div>
+                          </div>
+                          <div className="relative flex justify-center text-sm">
+                            <span className="px-2 bg-white text-slate-500">Or sign in with your account</span>
+                          </div>
+                        </div>
+                      </>
                     )}
 
                     <form onSubmit={handleSubmit} className="space-y-5">

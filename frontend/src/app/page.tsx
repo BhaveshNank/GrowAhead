@@ -21,7 +21,8 @@ import {
   Settings,
   ChevronDown,
   Bell,
-  Lightbulb
+  Lightbulb,
+  UserPlus
 } from "lucide-react"
 import { useAuthStore } from '@/stores/authStore'
 import { useDashboardStore } from '@/stores/dashboardStore'
@@ -260,6 +261,32 @@ function DashboardContent() {
             </div>
           </div>
         </div>
+
+        {/* Demo Account Banner */}
+        {user?.email === 'demo@growahead.com' && (
+          <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border-b border-amber-200">
+            <div className="container mx-auto px-4 py-3">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0" />
+                  <p className="text-sm text-amber-900">
+                    <span className="font-semibold">Demo Mode:</span> You're exploring GrowAhead with sample data.
+                    <span className="hidden sm:inline"> Changes won't be saved permanently.</span>
+                  </p>
+                </div>
+                
+                <Button
+                  onClick={() => router.push('/register')}
+                  size="sm"
+                  className="flex items-center gap-1.5 bg-amber-600 hover:bg-amber-700 text-white shadow-sm"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  Create Free Account
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Main Content */}
         <div className="container mx-auto px-4 py-8">
