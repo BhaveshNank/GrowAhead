@@ -22,7 +22,8 @@ import {
   RefreshCw,
   Download,
   AlertCircle,
-  CheckCircle2
+  CheckCircle2,
+  Home
 } from 'lucide-react'
 import { transactionsAPI, Transaction } from '@/lib/api'
 import { useAuthStore } from '@/stores/authStore'
@@ -30,6 +31,8 @@ import { formatRelativeTime, formatCurrency, debounce } from '@/lib/utils'
 import AuthWrapper from '@/components/ui/AuthWrapper'
 import AddTransactionModal from '@/components/ui/AddTransactionModal'
 import CSVUploadModal from '@/components/ui/CSVUploadModal'
+import EditTransactionModal from '@/components/ui/EditTransactionModal'
+import DeleteTransactionModal from '@/components/ui/DeleteTransactionModal'
 
 interface PaginationInfo {
   page: number
@@ -81,6 +84,8 @@ function TransactionsPageContent() {
   // Modal states
   const [isAddTransactionOpen, setIsAddTransactionOpen] = useState(false)
   const [isCSVUploadOpen, setIsCSVUploadOpen] = useState(false)
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
+  const [deletingTransaction, setDeletingTransaction] = useState<Transaction | null>(null)
 
   // Success message state
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
@@ -250,20 +255,22 @@ function TransactionsPageContent() {
   return (
     <>
       <div className="min-h-screen bg-slate-50/50">
-        {/* Header */}
-        <div className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-10">
+        {/* Header - Improved with better styling */}
+        <div className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-10 shadow-sm">
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
+                {/* Improved Back Button */}
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
                   onClick={() => router.push('/')}
-                  className="flex items-center"
+                  className="flex items-center hover:bg-slate-100 transition-all"
                 >
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Dashboard
+                  <Home className="h-4 w-4 mr-2" />
+                  <span className="font-medium">Dashboard</span>
                 </Button>
+                <div className="border-l border-slate-300 h-8"></div>
                 <div>
                   <h1 className="text-2xl font-bold text-slate-900">Transactions</h1>
                   <p className="text-sm text-slate-600">
@@ -484,7 +491,6 @@ function TransactionsPageContent() {
                                   <p className="font-medium text-slate-900">{transaction.merchant}</p>
                                   <p className="text-xs text-slate-500">
                                     {formatRelativeTime(transaction.transactionDate)}
-                                    
                                   </p>
                                 </div>
                               </div>
@@ -514,21 +520,25 @@ function TransactionsPageContent() {
                             </td>
                             <td className="py-3 px-4">
                               <div className="flex items-center space-x-1">
+                                {/* Edit Button - Wired up! */}
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => alert('Edit functionality coming soon!')}
-                                  className="h-8 w-8 p-0"
+                                  onClick={() => setEditingTransaction(transaction)}
+                                  className="h-8 w-8 p-0 hover:bg-slate-100"
+                                  title="Edit transaction"
                                 >
-                                  <Edit className="h-4 w-4" />
+                                  <Edit className="h-4 w-4 text-slate-600" />
                                 </Button>
+                                {/* Delete Button - Wired up! */}
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => alert('Delete functionality coming soon!')}
-                                  className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                                  onClick={() => setDeletingTransaction(transaction)}
+                                  className="h-8 w-8 p-0 hover:bg-red-50"
+                                  title="Delete transaction"
                                 >
-                                  <Trash2 className="h-4 w-4" />
+                                  <Trash2 className="h-4 w-4 text-red-600" />
                                 </Button>
                               </div>
                             </td>
@@ -596,6 +606,32 @@ function TransactionsPageContent() {
         onClose={() => setIsCSVUploadOpen(false)}
         onSuccess={() => handleOperationSuccess('CSV uploaded successfully!')}
       />
+
+      {/* Edit Modal - Wired up! */}
+      {editingTransaction && (
+        <EditTransactionModal
+          isOpen={!!editingTransaction}
+          transaction={editingTransaction}
+          onClose={() => setEditingTransaction(null)}
+          onSuccess={() => {
+            handleOperationSuccess('Transaction updated successfully!')
+            setEditingTransaction(null)
+          }}
+        />
+      )}
+
+      {/* Delete Modal - Wired up! */}
+      {deletingTransaction && (
+        <DeleteTransactionModal
+          isOpen={!!deletingTransaction}
+          transaction={deletingTransaction}
+          onClose={() => setDeletingTransaction(null)}
+          onSuccess={() => {
+            handleOperationSuccess('Transaction deleted successfully!')
+            setDeletingTransaction(null)
+          }}
+        />
+      )}
     </>
   )
 }
