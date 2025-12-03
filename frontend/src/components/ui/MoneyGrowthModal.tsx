@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { X, DollarSign, TrendingUp, Clock, Lightbulb, TrendingDown } from 'lucide-react'
+import { X, DollarSign, TrendingUp, Clock, Lightbulb, TrendingDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 interface MoneyGrowthModalProps {
@@ -12,6 +12,7 @@ interface MoneyGrowthModalProps {
   totalGrowth: number
   roundupCount: number
   monthsActive?: number
+  riskProfile: string
 }
 
 export default function MoneyGrowthModal({
@@ -21,9 +22,55 @@ export default function MoneyGrowthModal({
   totalContributions,
   totalGrowth,
   roundupCount,
-  monthsActive = 1
+  monthsActive = 1,
+  riskProfile
 }: MoneyGrowthModalProps) {
   if (!isOpen) return null
+  
+  // Tips carousel state
+  const [currentTipIndex, setCurrentTipIndex] = useState(0)
+  
+  // Get return rate for risk profile
+  const getReturnRate = () => {
+    const rates = { conservative: '5%', balanced: '8%', aggressive: '12%' }
+    return rates[riskProfile as keyof typeof rates] || '8%'
+  }
+  
+  // Learning tips
+  const tips = [
+    {
+      title: 'The Power of Compound Interest',
+      content: `Your ${Number(totalContributions || 0).toFixed(2)} investment isn't just sitting idle - it's earning returns. And those returns will earn returns too. This compounding effect is why your portfolio has grown to ${Number(totalBalance || 0).toFixed(2)}.`
+    },
+    {
+      title: 'Time-Weighted Growth',
+      content: 'Your earliest investments have grown more than recent ones because they\'ve had more time to compound. Starting early matters more than investing large amounts all at once.'
+    },
+    {
+      title: 'Dollar-Cost Averaging',
+      content: 'By investing small amounts regularly through roundups, you\'re automatically practicing dollar-cost averaging - a proven strategy used by professional investors to reduce risk.'
+    },
+    {
+      title: 'Understanding Risk & Return',
+      content: `Your ${riskProfile || 'balanced'} portfolio aims for ${getReturnRate()} annual returns. Conservative (5%) is safer but slower. Balanced (8%) offers steady growth. Aggressive (12%) targets higher returns with more volatility.`
+    },
+    {
+      title: 'Consistency Beats Timing',
+      content: `You've been investing for ${monthsActive || 0} ${monthsActive === 1 ? 'month' : 'months'}. Regular, consistent investing typically outperforms trying to time the market. Keep going!`
+    },
+    {
+      title: 'From Simulation to Reality',
+      content: 'This platform teaches you micro-investing concepts in a risk-free environment. When you\'re ready for real investing, these principles apply to actual platforms like Acorns, Stash, or Robinhood.'
+    }
+  ]
+  
+  const handlePreviousTip = () => {
+    setCurrentTipIndex((prev) => (prev - 1 + tips.length) % tips.length)
+  }
+  
+  const handleNextTip = () => {
+    setCurrentTipIndex((prev) => (prev + 1) % tips.length)
+  }
   
   const growthPercentage = totalContributions > 0 
     ? ((totalGrowth / totalContributions) * 100).toFixed(1)
@@ -244,6 +291,60 @@ export default function MoneyGrowthModal({
                   <span className="text-blue-700 text-base">
                     ${totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Learning Tips Section */}
+          <div className="px-6 pb-6 border-t border-slate-200">
+            <div className="pt-6">
+              <div className="flex items-center space-x-2 mb-4">
+                <Lightbulb className="h-5 w-5 text-slate-700" />
+                <h4 className="font-semibold text-slate-900">Learning Tips</h4>
+              </div>
+              
+              <div className="bg-slate-50 rounded-lg p-5 border border-slate-200">
+                <h5 className="text-sm font-semibold text-slate-900 mb-2">
+                  {tips[currentTipIndex].title}
+                </h5>
+                <p className="text-sm text-slate-700 leading-relaxed mb-4">
+                  {tips[currentTipIndex].content}
+                </p>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-1.5">
+                    {tips.map((_, index) => (
+                      <div
+                        key={index}
+                        className={`h-1.5 rounded-full transition-all duration-300 ${
+                          index === currentTipIndex 
+                            ? 'w-6 bg-slate-600' 
+                            : 'w-1.5 bg-slate-300'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={handlePreviousTip}
+                      className="p-1.5 rounded-md hover:bg-slate-200 transition-colors"
+                      aria-label="Previous tip"
+                    >
+                      <ChevronLeft className="h-4 w-4 text-slate-600" />
+                    </button>
+                    <span className="text-xs text-slate-500">
+                      {currentTipIndex + 1} / {tips.length}
+                    </span>
+                    <button
+                      onClick={handleNextTip}
+                      className="p-1.5 rounded-md hover:bg-slate-200 transition-colors"
+                      aria-label="Next tip"
+                    >
+                      <ChevronRight className="h-4 w-4 text-slate-600" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

@@ -36,7 +36,6 @@ import InvestmentProjections from '@/components/ui/InvestmentProjections'
 import NotificationSystem from '@/components/ui/NotificationSystem'
 import { InfoTooltip } from '@/components/ui/tooltip'
 import MoneyGrowthModal from '@/components/ui/MoneyGrowthModal'
-import EducationalTip from '@/components/ui/EducationalTip'
 
 // Simplified User Dropdown Component
 function UserDropdown() {
@@ -340,18 +339,6 @@ function DashboardContent() {
             </Card>
           </div>
 
-          {/* Educational Tip Panel */}
-          <div className="mb-8">
-            <EducationalTip
-              totalBalance={totalBalance}
-              totalContributions={totalContributions}
-              totalGrowth={totalGrowth}
-              roundupCount={roundupCount}
-              monthsActive={monthsActive}
-              riskProfile={riskProfile}
-            />
-          </div>
-
           {/* Quick Stats */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <Card className="hover:shadow-md transition-shadow">
@@ -557,6 +544,7 @@ function DashboardContent() {
         totalGrowth={totalGrowth}
         roundupCount={roundupCount}
         monthsActive={monthsActive}
+        riskProfile={riskProfile}
       />
     </>
   )
