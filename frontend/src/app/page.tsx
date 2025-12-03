@@ -36,7 +36,7 @@ import InvestmentProjections from '@/components/ui/InvestmentProjections'
 import NotificationSystem from '@/components/ui/NotificationSystem'
 import { InfoTooltip } from '@/components/ui/tooltip'
 import MoneyGrowthModal from '@/components/ui/MoneyGrowthModal'
-import AchievementMilestones from '@/components/ui/AchievementMilestones'
+import EducationalTip from '@/components/ui/EducationalTip'
 
 // Simplified User Dropdown Component
 function UserDropdown() {
@@ -181,7 +181,6 @@ function DashboardContent() {
   const totalGrowth = walletData?.debug?.totalGrowth || 0
   const roundupCount = walletData?.debug?.roundupCount || 0
   const monthsActive = walletData?.debug?.monthsActive || 1
-  const daysActive = monthsActive * 30 // Approximate days from months
 
   // Mock monthly growth calculation (you can enhance this with real data)
   const monthlyGrowth = walletData?.summary?.monthlyGrowthRate || 0
@@ -341,6 +340,18 @@ function DashboardContent() {
             </Card>
           </div>
 
+          {/* Educational Tip Panel */}
+          <div className="mb-8">
+            <EducationalTip
+              totalBalance={totalBalance}
+              totalContributions={totalContributions}
+              totalGrowth={totalGrowth}
+              roundupCount={roundupCount}
+              monthsActive={monthsActive}
+              riskProfile={riskProfile}
+            />
+          </div>
+
           {/* Quick Stats */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <Card className="hover:shadow-md transition-shadow">
@@ -434,15 +445,6 @@ function DashboardContent() {
 
           {/* Enhanced Analytics Section */}
           <div className="space-y-8">
-            {/* Achievement Milestones */}
-            <AchievementMilestones
-              totalBalance={totalBalance}
-              totalContributions={totalContributions}
-              totalGrowth={totalGrowth}
-              roundupCount={roundupCount}
-              daysActive={daysActive}
-            />
-            
             {/* Full Analytics Grid */}
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
               <PortfolioGrowthChart />
