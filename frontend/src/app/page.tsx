@@ -142,7 +142,7 @@ function UserDropdown() {
 
 function DashboardContent() {
   const router = useRouter()
-  const { user } = useAuthStore()
+  const { user, logout } = useAuthStore()
   const { 
     walletData,
     recentTransactions, 
@@ -276,7 +276,10 @@ function DashboardContent() {
                 </div>
                 
                 <Button
-                  onClick={() => router.push('/register')}
+                  onClick={() => {
+                    logout()
+                    router.push('/')
+                  }}
                   size="sm"
                   className="flex items-center gap-1.5 bg-amber-600 hover:bg-amber-700 text-white shadow-sm"
                 >
