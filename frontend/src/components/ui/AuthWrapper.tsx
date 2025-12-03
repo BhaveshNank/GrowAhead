@@ -281,7 +281,7 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
                               setFormData({
                                 ...formData,
                                 email: 'demo@growahead.com',
-                                password: 'demo123'
+                                password: 'Demo123!'
                               })
                             }}
                             className="w-full h-12 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium shadow-md hover:shadow-lg transition-all duration-200"
