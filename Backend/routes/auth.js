@@ -511,13 +511,13 @@ router.put('/profile', authenticateToken, async (req, res) => {
         let paramCount = 1;
 
         if (name !== undefined) {
-            updates.push(`name = ${paramCount}`);
+            updates.push(`name = $${paramCount}`);
             values.push(name);
             paramCount++;
         }
 
         if (riskProfile !== undefined) {
-            updates.push(`risk_profile = ${paramCount}`);
+            updates.push(`risk_profile = $${paramCount}`);
             values.push(riskProfile);
             paramCount++;
         }
@@ -526,7 +526,7 @@ router.put('/profile', authenticateToken, async (req, res) => {
         values.push(userId);
 
         // Update user profile
-        const updateQuery = `UPDATE users SET ${updates.join(', ')} WHERE id = ${paramCount} RETURNING id, name, email, risk_profile, email_verified, created_at`;
+        const updateQuery = `UPDATE users SET ${updates.join(', ')} WHERE id = $${paramCount} RETURNING id, name, email, risk_profile, email_verified, created_at`;
         const updateResult = await req.db.query(updateQuery, values);
 
         const updatedUser = updateResult.rows[0];
