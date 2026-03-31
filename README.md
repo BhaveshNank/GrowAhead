@@ -3,10 +3,7 @@
 A full-stack fintech platform that simulates micro-investing through automated round-up calculations and portfolio projections.
 
 ## Live Demo
-Frontend: https://growahead-beta.vercel.app  
-Backend (Render): https://growahead-backend.onrender.com  
-Backend (AWS): https://growahead-backend-dev.us-east-1.elasticbeanstalk.com  
-
+https://growahead-beta.vercel.app  
 
 ## Application Overview
 
