@@ -1,111 +1,202 @@
 name: 🧪 Continuous Integration
 
-# When should this workflow run?
 on:
   push:
-    branches: [ main, master, dev ]  # Run on pushes to these branches
+    branches: [ main, master, dev ]
   pull_request:
-    branches: [ main, master, dev ]  # Run on pull requests to these branches
+    branches: [ main, master, dev ]
 
-# Jobs define what tasks to run
 jobs:
-  # Job 1: Test Backend
+  # ── Job 1: Backend Tests ──────────────────────────────────────────────────
   backend-tests:
     name: 🔧 Backend Tests
-    runs-on: ubuntu-latest  # Use latest Ubuntu Linux server
-    
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: bhaveshnankani
+          POSTGRES_PASSWORD: ""
+          POSTGRES_DB: growahead_test
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
-      # Step 1: Get your code from GitHub
       - name: 📥 Checkout code
         uses: actions/checkout@v4
-      
-      # Step 2: Set up Node.js environment
+
       - name: 🟢 Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'  # Use Node.js version 18
-          cache: 'npm'        # Cache npm dependencies for faster builds
+          node-version: '20'
+          cache: 'npm'
           cache-dependency-path: Backend/package-lock.json
-      
-      # Step 3: Install backend dependencies
+
       - name: 📦 Install dependencies
         working-directory: ./Backend
-        run: npm ci  # Clean install (faster and more reliable than npm install)
-      
-      # Step 4: Run backend tests
+        run: npm ci
+
+      - name: 🗄️ Set up test database schema
+        run: |
+          psql -U bhaveshnankani -d growahead_test -h localhost << 'SQL'
+          CREATE TABLE users (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            email VARCHAR(255) UNIQUE NOT NULL,
+            password_hash VARCHAR(255) NOT NULL,
+            risk_profile VARCHAR(20) DEFAULT 'balanced' CHECK (risk_profile IN ('conservative', 'balanced', 'aggressive')),
+            email_verified BOOLEAN DEFAULT FALSE,
+            verification_otp VARCHAR(10),
+            otp_expires_at TIMESTAMP,
+            otp_attempts INTEGER DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          );
+          CREATE TABLE email_verifications (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+            email VARCHAR(255) NOT NULL,
+            otp_code VARCHAR(10) NOT NULL,
+            expires_at TIMESTAMP NOT NULL,
+            verified_at TIMESTAMP,
+            ip_address VARCHAR(45),
+            user_agent TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          );
+          CREATE TABLE transactions (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+            merchant VARCHAR(255) NOT NULL,
+            amount DECIMAL(10,2) NOT NULL,
+            category VARCHAR(100),
+            transaction_date DATE NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          );
+          CREATE TABLE roundups (
+            id SERIAL PRIMARY KEY,
+            transaction_id INTEGER REFERENCES transactions(id) ON DELETE CASCADE,
+            user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+            roundup_amount DECIMAL(10,2) NOT NULL,
+            current_value DECIMAL(10,2) DEFAULT 0.00,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          );
+          CREATE TABLE wallet (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+            total_balance DECIMAL(10,2) DEFAULT 0.00,
+            last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          );
+          CREATE TABLE investment_profiles (
+            id SERIAL PRIMARY KEY,
+            profile_name VARCHAR(20) UNIQUE NOT NULL,
+            annual_return_rate DECIMAL(5,4) NOT NULL,
+            description TEXT
+          );
+          INSERT INTO investment_profiles (profile_name, annual_return_rate, description) VALUES
+          ('conservative', 0.0500, '5% annual return'),
+          ('balanced', 0.0800, '8% annual return'),
+          ('aggressive', 0.1200, '12% annual return');
+          CREATE OR REPLACE FUNCTION update_wallet_balance()
+          RETURNS TRIGGER AS $$
+          BEGIN
+            INSERT INTO wallet (user_id, total_balance, last_updated)
+            VALUES (NEW.user_id, NEW.roundup_amount, CURRENT_TIMESTAMP)
+            ON CONFLICT (user_id)
+            DO UPDATE SET total_balance = wallet.total_balance + NEW.roundup_amount, last_updated = CURRENT_TIMESTAMP;
+            RETURN NEW;
+          END;
+          $$ LANGUAGE plpgsql;
+          CREATE OR REPLACE FUNCTION initialize_roundup_current_value()
+          RETURNS TRIGGER AS $$
+          BEGIN
+            IF NEW.current_value IS NULL OR NEW.current_value = 0 THEN
+              NEW.current_value = NEW.roundup_amount;
+            END IF;
+            RETURN NEW;
+          END;
+          $$ LANGUAGE plpgsql;
+          CREATE TRIGGER trigger_update_wallet AFTER INSERT ON roundups FOR EACH ROW EXECUTE FUNCTION update_wallet_balance();
+          CREATE TRIGGER trigger_initialize_roundup_value BEFORE INSERT ON roundups FOR EACH ROW EXECUTE FUNCTION initialize_roundup_current_value();
+          SQL
+
       - name: 🧪 Run backend tests
         working-directory: ./Backend
         run: npm test
-      
-      # Step 5: Upload test results (optional but useful for debugging)
+        env:
+          PGHOST: localhost
+          PGPORT: 5432
+          PGUSER: bhaveshnankani
+          PGPASSWORD: ""
+          PGDATABASE: growahead_test
+
       - name: 📊 Upload test results
-        if: always()  # Run even if tests fail
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: backend-test-results
           path: Backend/test-results/
 
-  # Job 2: Test Frontend
+  # ── Job 2: Frontend Tests ─────────────────────────────────────────────────
   frontend-tests:
     name: 🎨 Frontend Tests
     runs-on: ubuntu-latest
-    
+
     steps:
-      # Step 1: Get your code
       - name: 📥 Checkout code
         uses: actions/checkout@v4
-      
-      # Step 2: Setup Node.js
+
       - name: 🟢 Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
-      
-      # Step 3: Install frontend dependencies
+
       - name: 📦 Install dependencies
         working-directory: ./frontend
         run: npm ci
-      
-      # Step 4: Run ESLint to check code quality
+
       - name: 🔍 Lint code
         working-directory: ./frontend
         run: npm run lint
-        continue-on-error: true  # Don't fail the build if linting fails
-      
-      # Step 5: Build the Next.js app to ensure it compiles
+        continue-on-error: true
+
       - name: 🏗️ Build application
         working-directory: ./frontend
         run: npm run build
-      
-      # Step 6: Run TypeScript type checking
+
       - name: ✅ Type check
         working-directory: ./frontend
         run: npx tsc --noEmit
         continue-on-error: true
 
-  # Job 3: Security Audit
+  # ── Job 3: Security Audit ─────────────────────────────────────────────────
   security-audit:
     name: 🛡️ Security Audit
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
-      
+
       - name: 🟢 Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
-      
-      # Check backend for vulnerabilities
+          node-version: '20'
+
       - name: 🔒 Audit backend dependencies
         working-directory: ./Backend
         run: npm audit --audit-level=moderate
         continue-on-error: true
-      
-      # Check frontend for vulnerabilities
+
       - name: 🔒 Audit frontend dependencies
         working-directory: ./frontend
         run: npm audit --audit-level=moderate
