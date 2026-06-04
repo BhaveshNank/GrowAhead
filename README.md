@@ -6,18 +6,58 @@ A full-stack fintech platform that simulates spare-change investing. Every trans
 
 ---
 
-## Architecture
 
+## Architecture
+ 
 ```mermaid
-graph TD
-    A[User / Browser] -->|HTTPS| B[Next.js Frontend<br/>Vercel]
-    B -->|REST API calls| C[Express Backend<br/>Render]
-    C -->|pg Pool| D[(PostgreSQL<br/>Neon)]
-    C -->|JWT| B
-    C -->|OTP emails| E[SendGrid]
-    F[GitHub Actions] -->|CI — test + build| C
-    F -->|CD — deploy on push| B
-    G[cron-job.org] -->|ping /api/health every 14min| C
+flowchart TD
+    Browser["Browser"]
+    Vercel["Vercel — Frontend"]
+    Server["Render — Express · server.js"]
+    JWT["JWT middleware · auth.js"]
+    Auth["auth.js"]
+    Transactions["transactions.js"]
+    Wallet["wallet.js"]
+    Projections["projections.js"]
+    Roundup["utils/roundup.js"]
+    Email["utils/emailService.js"]
+    DB["Neon PostgreSQL"]
+    SendGrid["SendGrid"]
+    GHA["GitHub Actions"]
+    Cron["cron-job.org"]
+    Multer["multer · csv-parser"]
+ 
+    Browser -->|HTTPS| Vercel
+    Vercel -->|REST API| Server
+    Server -->|Public routes| Auth
+    Server --> JWT
+    JWT -->|Protected routes| Transactions
+    JWT -->|Protected routes| Wallet
+    JWT -->|Protected routes| Projections
+    Transactions --> Roundup
+    Wallet --> Roundup
+    Projections --> Roundup
+    Auth --> Email
+    Roundup -->|pg pool| DB
+    Email --> SendGrid
+    GHA -->|CI + deploy| Server
+    Cron -->|uptime ping| Server
+    Transactions --> Multer
+ 
+    classDef gray fill:#3d3d3d,stroke:#666,color:#fff
+    classDef purple fill:#4a3f8a,stroke:#7b6fd4,color:#fff
+    classDef teal fill:#1a6b52,stroke:#2a9d75,color:#fff
+    classDef blue fill:#1a4a7a,stroke:#3a8bd4,color:#fff
+    classDef coral fill:#7a3020,stroke:#c05535,color:#fff
+    classDef amber fill:#7a5010,stroke:#c07515,color:#fff
+ 
+    class Browser gray
+    class Vercel purple
+    class Server,JWT,DB teal
+    class Auth,Transactions,Wallet,Projections blue
+    class Roundup,Email coral
+    class SendGrid,GHA,Cron amber
+    class Multer gray
 ```
 
 ---
