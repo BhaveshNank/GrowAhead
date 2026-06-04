@@ -1,185 +1,320 @@
-// Save this as tests/transactions.test.js
-const { calculateRoundUp, processTransactionRoundUps } = require('../utils/roundup');
+const request = require('supertest');
+const express = require('express');
+const { Pool } = require('pg');
+const bcrypt = require('bcryptjs');
+const authRouter = require('../routes/auth');
+const transactionsRouter = require('../routes/transactions');
 
-describe('GrowAhead Transaction Processing Tests', () => {
+// ─────────────────────────────────────────────
+// Test app — mirrors server.js wiring but
+// points at growahead_test database.
+// ─────────────────────────────────────────────
+const testPool = new Pool({
+    user: 'bhaveshnankani',
+    host: 'localhost',
+    database: 'growahead_test',
+    password: null,
+    port: 5432,
+});
 
-    describe('Transaction Data Validation', () => {
-        test('should validate transaction structure', () => {
-            const validTransaction = {
-                merchant: 'Starbucks',
-                amount: 4.67,
-                category: 'Food & Drink',
-                date: '2025-09-22'
-            };
+const app = express();
+app.use(express.json());
+app.use((req, res, next) => {
+    req.db = testPool;
+    next();
+});
+app.use('/api/auth', authRouter);
+app.use('/api/transactions', transactionsRouter);
 
-            // Check required fields
-            expect(validTransaction.merchant).toBeDefined();
-            expect(validTransaction.amount).toBeDefined();
-            expect(validTransaction.category).toBeDefined();
-            expect(validTransaction.date).toBeDefined();
+// ─────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────
 
-            // Check data types
-            expect(typeof validTransaction.merchant).toBe('string');
-            expect(typeof validTransaction.amount).toBe('number');
-            expect(typeof validTransaction.category).toBe('string');
-            expect(typeof validTransaction.date).toBe('string');
+// Creates a verified user and returns their JWT token
+async function createVerifiedUser(email = 'test@example.com', password = 'password123') {
+    const hash = await bcrypt.hash(password, 10);
+    await testPool.query(
+        `INSERT INTO users (name, email, password_hash, email_verified, risk_profile)
+         VALUES ('Test User', $1, $2, TRUE, 'balanced')`,
+        [email, hash]
+    );
+    const res = await request(app)
+        .post('/api/auth/login')
+        .send({ email, password });
+    return res.body.token;
+}
 
-            // Check amount is positive
-            expect(validTransaction.amount).toBeGreaterThan(0);
-        });
+// ─────────────────────────────────────────────
+// Cleanup before each test
+// ─────────────────────────────────────────────
+beforeEach(async () => {
+    await testPool.query('DELETE FROM email_verifications');
+    await testPool.query('DELETE FROM roundups');
+    await testPool.query('DELETE FROM wallet');
+    await testPool.query('DELETE FROM transactions');
+    await testPool.query('DELETE FROM users');
+});
 
-        test('should validate transaction categories', () => {
-            const validCategories = [
-                'Food & Drink',
-                'Groceries', 
-                'Shopping',
-                'Transport',
-                'Entertainment',
-                'Utilities'
-            ];
+afterAll(async () => {
+    await testPool.end();
+});
 
-            const testTransactions = [
-                { category: 'Food & Drink', valid: true },
-                { category: 'Invalid Category', valid: false },
-                { category: 'Groceries', valid: true },
-                { category: 'Random', valid: false }
-            ];
+// ─────────────────────────────────────────────
+// GET /api/transactions
+// ─────────────────────────────────────────────
+describe('GET /api/transactions', () => {
 
-            testTransactions.forEach(({ category, valid }) => {
-                if (valid) {
-                    expect(validCategories).toContain(category);
-                } else {
-                    expect(validCategories).not.toContain(category);
-                }
-            });
-        });
+    test('no token returns 401', async () => {
+        const res = await request(app).get('/api/transactions');
+        expect(res.status).toBe(401);
     });
 
-    describe('Scenario 1: College Student Transaction Processing', () => {
-        const collegeTransactions = [
-            { id: 1, merchant: 'Starbucks', amount: 3.47, category: 'Food & Drink' },
-            { id: 2, merchant: 'McDonald\'s', amount: 8.23, category: 'Food & Drink' },
-            { id: 3, merchant: 'Walmart', amount: 28.33, category: 'Groceries' },
-            { id: 4, merchant: 'Movie Theater', amount: 15.50, category: 'Entertainment' },
-            { id: 5, merchant: 'Bus Fare', amount: 2.75, category: 'Transport' }
-        ];
-
-        test('should process college student transactions correctly', () => {
-            const result = processTransactionRoundUps(collegeTransactions);
-            
-            expect(result.processedCount).toBe(5);
-            expect(parseFloat(result.totalRoundUps)).toBeGreaterThan(2.5);
-            
-            console.log(`College Student - Total Roundups: $${result.totalRoundUps}`);
-            console.log(`Processed ${result.processedCount} transactions`);
-        });
-
-        test('should categorize college transactions correctly', () => {
-            const categories = {};
-            collegeTransactions.forEach(t => {
-                categories[t.category] = (categories[t.category] || 0) + 1;
-            });
-
-            expect(categories['Food & Drink']).toBe(2); // 40%
-            expect(categories['Groceries']).toBe(1);    // 20%
-            expect(categories['Entertainment']).toBe(1); // 20%
-            expect(categories['Transport']).toBe(1);    // 20%
-        });
+    test('invalid token returns 403', async () => {
+        const res = await request(app)
+            .get('/api/transactions')
+            .set('Authorization', 'Bearer badtoken');
+        expect(res.status).toBe(403);
     });
 
-    describe('Scenario 2: Business Professional Transaction Processing', () => {
-        const businessTransactions = [
-            { id: 1, merchant: 'Business Lunch', amount: 47.68, category: 'Food & Drink' },
-            { id: 2, merchant: 'Gas Station', amount: 52.87, category: 'Transport' },
-            { id: 3, merchant: 'Department Store', amount: 125.44, category: 'Shopping' },
-            { id: 4, merchant: 'Whole Foods', amount: 87.33, category: 'Groceries' },
-            { id: 5, merchant: 'Client Dinner', amount: 65.43, category: 'Food & Drink' }
-        ];
-
-        test('should process business professional transactions correctly', () => {
-            const result = processTransactionRoundUps(businessTransactions);
-            
-            expect(result.processedCount).toBe(5);
-            expect(parseFloat(result.totalRoundUps)).toBeGreaterThan(1.5);
-            
-            console.log(`Business Professional - Total Roundups: $${result.totalRoundUps}`);
-            
-            // Higher amounts should generally have varied roundups
-            result.processedTransactions.forEach(t => {
-                expect(parseFloat(t.roundUpAmount)).toBeGreaterThan(0);
-                expect(parseFloat(t.roundUpAmount)).toBeLessThan(1);
-            });
-        });
+    test('valid token with no transactions returns empty array', async () => {
+        const token = await createVerifiedUser();
+        const res = await request(app)
+            .get('/api/transactions')
+            .set('Authorization', `Bearer ${token}`);
+        expect(res.status).toBe(200);
+        expect(res.body.transactions).toEqual([]);
+        expect(res.body.pagination.totalTransactions).toBe(0);
     });
 
-    describe('Scenario 3: Family Household Transaction Processing', () => {
-        const familyTransactions = [
-            { id: 1, merchant: 'Costco', amount: 156.78, category: 'Groceries' },
-            { id: 2, merchant: 'Target', amount: 98.67, category: 'Shopping' },
-            { id: 3, merchant: 'Electric Company', amount: 267.84, category: 'Utilities' },
-            { id: 4, merchant: 'Kids Activity Center', amount: 45.99, category: 'Entertainment' }
-        ];
+    test('returns only the authenticated user\'s transactions', async () => {
+        const token1 = await createVerifiedUser('user1@example.com');
+        const token2 = await createVerifiedUser('user2@example.com');
 
-        test('should process family household transactions correctly', () => {
-            const result = processTransactionRoundUps(familyTransactions);
-            
-            expect(result.processedCount).toBe(4);
-            expect(parseFloat(result.totalRoundUps)).toBeGreaterThan(0.5);
-            
-            console.log(`Family Household - Total Roundups: $${result.totalRoundUps}`);
-            
-            // Large transactions should have reasonable roundups
-            expect(parseFloat(result.totalRoundUps)).toBeLessThan(4.0);
-        });
+        // Add a transaction for user1
+        await request(app)
+            .post('/api/transactions')
+            .set('Authorization', `Bearer ${token1}`)
+            .send({ merchant: 'Starbucks', amount: 4.32, category: 'Food & Drink', transactionDate: '2026-01-01' });
+
+        // User2 should see no transactions
+        const res = await request(app)
+            .get('/api/transactions')
+            .set('Authorization', `Bearer ${token2}`);
+
+        expect(res.status).toBe(200);
+        expect(res.body.transactions).toHaveLength(0);
     });
 
-    describe('Scenario 4: Edge Case Transaction Processing', () => {
-        const edgeCaseTransactions = [
-            { id: 1, merchant: 'Small Purchase', amount: 1.01, category: 'Shopping' },
-            { id: 2, merchant: 'Almost Whole', amount: 2.99, category: 'Food & Drink' },
-            { id: 3, merchant: 'Exact Amount', amount: 500.00, category: 'Shopping' },
-            { id: 4, merchant: 'Large Purchase', amount: 999.99, category: 'Shopping' }
-        ];
+});
 
-        test('should handle edge case transactions correctly', () => {
-            const result = processTransactionRoundUps(edgeCaseTransactions);
-            
-            expect(result.processedCount).toBe(4);
-            
-            // Verify specific edge case calculations
-            const smallPurchase = result.processedTransactions.find(t => t.amount === 1.01);
-            expect(parseFloat(smallPurchase.roundUpAmount)).toBe(0.99);
+// ─────────────────────────────────────────────
+// POST /api/transactions (manual entry)
+// ─────────────────────────────────────────────
+describe('POST /api/transactions', () => {
 
-            const almostWhole = result.processedTransactions.find(t => t.amount === 2.99);
-            expect(parseFloat(almostWhole.roundUpAmount)).toBe(0.01);
-
-            const exactAmount = result.processedTransactions.find(t => t.amount === 500.00);
-            expect(parseFloat(exactAmount.roundUpAmount)).toBe(1.00);
-
-            console.log(`Edge Cases - Total Roundups: $${result.totalRoundUps}`);
-        });
+    test('no token returns 401', async () => {
+        const res = await request(app)
+            .post('/api/transactions')
+            .send({ merchant: 'Starbucks', amount: 4.32, transactionDate: '2026-01-01' });
+        expect(res.status).toBe(401);
     });
 
-    describe('CSV Data Structure Validation', () => {
-        test('should validate CSV headers', () => {
-            const requiredHeaders = ['merchant', 'amount', 'category', 'date'];
-            const csvHeaders = 'merchant,amount,category,date';
-            
-            const headers = csvHeaders.split(',');
-            
-            requiredHeaders.forEach(required => {
-                expect(headers).toContain(required);
-            });
-        });
-
-        test('should validate CSV data format', () => {
-            const csvRow = 'Starbucks,4.67,Food & Drink,2025-09-22';
-            const [merchant, amount, category, date] = csvRow.split(',');
-            
-            expect(merchant).toBe('Starbucks');
-            expect(parseFloat(amount)).toBe(4.67);
-            expect(category).toBe('Food & Drink');
-            expect(date).toMatch(/^\d{4}-\d{2}-\d{2}$/); // YYYY-MM-DD format
-        });
+    test('missing merchant returns 400', async () => {
+        const token = await createVerifiedUser();
+        const res = await request(app)
+            .post('/api/transactions')
+            .set('Authorization', `Bearer ${token}`)
+            .send({ amount: 4.32, transactionDate: '2026-01-01' });
+        expect(res.status).toBe(400);
+        expect(res.body.error).toBe('Validation Error');
     });
+
+    test('missing amount returns 400', async () => {
+        const token = await createVerifiedUser();
+        const res = await request(app)
+            .post('/api/transactions')
+            .set('Authorization', `Bearer ${token}`)
+            .send({ merchant: 'Starbucks', transactionDate: '2026-01-01' });
+        expect(res.status).toBe(400);
+        expect(res.body.error).toBe('Validation Error');
+    });
+
+    test('negative amount returns 400', async () => {
+        const token = await createVerifiedUser();
+        const res = await request(app)
+            .post('/api/transactions')
+            .set('Authorization', `Bearer ${token}`)
+            .send({ merchant: 'Starbucks', amount: -5.00, transactionDate: '2026-01-01' });
+        expect(res.status).toBe(400);
+        expect(res.body.error).toBe('Validation Error');
+    });
+
+    test('missing transactionDate returns 400', async () => {
+        const token = await createVerifiedUser();
+        const res = await request(app)
+            .post('/api/transactions')
+            .set('Authorization', `Bearer ${token}`)
+            .send({ merchant: 'Starbucks', amount: 4.32 });
+        expect(res.status).toBe(400);
+        expect(res.body.error).toBe('Validation Error');
+    });
+
+    test('valid transaction returns 201 with correct roundup', async () => {
+        const token = await createVerifiedUser();
+        const res = await request(app)
+            .post('/api/transactions')
+            .set('Authorization', `Bearer ${token}`)
+            .send({ merchant: 'Starbucks', amount: 4.32, category: 'Food & Drink', transactionDate: '2026-01-01' });
+
+        expect(res.status).toBe(201);
+        expect(res.body.transaction.merchant).toBe('Starbucks');
+        expect(res.body.transaction.amount).toBe(4.32);
+        // 4.32 → rounds to 5.00 → roundup = 0.68
+        expect(res.body.transaction.roundupAmount).toBe(0.68);
+    });
+
+    test('whole dollar amount generates £1.00 roundup', async () => {
+        const token = await createVerifiedUser();
+        const res = await request(app)
+            .post('/api/transactions')
+            .set('Authorization', `Bearer ${token}`)
+            .send({ merchant: 'Netflix', amount: 15.00, category: 'Entertainment', transactionDate: '2026-01-01' });
+
+        expect(res.status).toBe(201);
+        expect(res.body.transaction.roundupAmount).toBe(1.00);
+    });
+
+    test('transaction appears in GET after being added', async () => {
+        const token = await createVerifiedUser();
+
+        await request(app)
+            .post('/api/transactions')
+            .set('Authorization', `Bearer ${token}`)
+            .send({ merchant: 'Tesco', amount: 23.45, category: 'Groceries', transactionDate: '2026-01-01' });
+
+        const res = await request(app)
+            .get('/api/transactions')
+            .set('Authorization', `Bearer ${token}`);
+
+        expect(res.status).toBe(200);
+        expect(res.body.transactions).toHaveLength(1);
+        expect(res.body.transactions[0].merchant).toBe('Tesco');
+    });
+
+});
+
+// ─────────────────────────────────────────────
+// POST /api/transactions/upload-csv
+// ─────────────────────────────────────────────
+describe('POST /api/transactions/upload-csv', () => {
+
+    test('no token returns 401', async () => {
+        const res = await request(app)
+            .post('/api/transactions/upload-csv');
+        expect(res.status).toBe(401);
+    });
+
+    test('no file returns 400', async () => {
+        const token = await createVerifiedUser();
+        const res = await request(app)
+            .post('/api/transactions/upload-csv')
+            .set('Authorization', `Bearer ${token}`);
+        expect(res.status).toBe(400);
+        expect(res.body.error).toBe('No file uploaded');
+    });
+
+    test('valid CSV uploads and returns correct summary', async () => {
+        const token = await createVerifiedUser();
+        const csv = `merchant,amount,category,date\nStarbucks,4.32,Food & Drink,2026-01-01\nTesco,23.45,Groceries,2026-01-02\nNetflix,15.00,Entertainment,2026-01-03`;
+
+        const res = await request(app)
+            .post('/api/transactions/upload-csv')
+            .set('Authorization', `Bearer ${token}`)
+            .attach('csvFile', Buffer.from(csv), 'transactions.csv');
+
+        expect(res.status).toBe(200);
+        expect(res.body.summary.totalProcessed).toBe(3);
+        expect(res.body.summary.totalRoundups).toBe(3);
+        // 0.68 + 0.55 + 1.00 = 2.23
+        expect(res.body.summary.totalRoundupAmount).toBe('2.23');
+    });
+
+    test('CSV with invalid amount skips the bad row', async () => {
+        const token = await createVerifiedUser();
+        const csv = `merchant,amount,category,date\nStarbucks,4.32,Food & Drink,2026-01-01\nBadRow,notanumber,Shopping,2026-01-02`;
+
+        const res = await request(app)
+            .post('/api/transactions/upload-csv')
+            .set('Authorization', `Bearer ${token}`)
+            .attach('csvFile', Buffer.from(csv), 'transactions.csv');
+
+        // 1 valid row still processes successfully
+        expect(res.status).toBe(200);
+        expect(res.body.summary.totalProcessed).toBe(1);
+    });
+
+    test('CSV with all invalid rows returns 400', async () => {
+        const token = await createVerifiedUser();
+        const csv = `merchant,amount,category,date\nBadRow,notanumber,Shopping,2026-01-02`;
+
+        const res = await request(app)
+            .post('/api/transactions/upload-csv')
+            .set('Authorization', `Bearer ${token}`)
+            .attach('csvFile', Buffer.from(csv), 'transactions.csv');
+
+        expect(res.status).toBe(400);
+        expect(res.body.error).toBe('No valid transactions found');
+    });
+
+});
+
+// ─────────────────────────────────────────────
+// DELETE /api/transactions/:id
+// ─────────────────────────────────────────────
+describe('DELETE /api/transactions/:id', () => {
+
+    test('deleting another user\'s transaction returns 404', async () => {
+        const token1 = await createVerifiedUser('user1@example.com');
+        const token2 = await createVerifiedUser('user2@example.com');
+
+        // user1 adds a transaction
+        const postRes = await request(app)
+            .post('/api/transactions')
+            .set('Authorization', `Bearer ${token1}`)
+            .send({ merchant: 'Starbucks', amount: 4.32, transactionDate: '2026-01-01' });
+
+        const transactionId = postRes.body.transaction.id;
+
+        // user2 tries to delete it
+        const res = await request(app)
+            .delete(`/api/transactions/${transactionId}`)
+            .set('Authorization', `Bearer ${token2}`);
+
+        expect(res.status).toBe(404);
+    });
+
+    test('deleting own transaction returns 200 and removes it', async () => {
+        const token = await createVerifiedUser();
+
+        const postRes = await request(app)
+            .post('/api/transactions')
+            .set('Authorization', `Bearer ${token}`)
+            .send({ merchant: 'Starbucks', amount: 4.32, transactionDate: '2026-01-01' });
+
+        const transactionId = postRes.body.transaction.id;
+
+        const deleteRes = await request(app)
+            .delete(`/api/transactions/${transactionId}`)
+            .set('Authorization', `Bearer ${token}`);
+
+        expect(deleteRes.status).toBe(200);
+
+        // Confirm it's gone
+        const getRes = await request(app)
+            .get('/api/transactions')
+            .set('Authorization', `Bearer ${token}`);
+
+        expect(getRes.body.transactions).toHaveLength(0);
+    });
+
 });
