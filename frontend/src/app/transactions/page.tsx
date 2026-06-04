@@ -161,15 +161,13 @@ function TransactionsPageContent() {
 
   // Filter effects
   useEffect(() => {
-    fetchTransactions(true)
-  }, [selectedCategory, startDate, endDate, pagination.limit])
+  setPagination(prev => ({ ...prev, page: 1 }))
+}, [selectedCategory, startDate, endDate, pagination.limit])
 
   // Pagination effect
-  useEffect(() => {
-    if (pagination.page > 1) {
-      fetchTransactions()
-    }
-  }, [pagination.page])
+useEffect(() => {
+  fetchTransactions()
+}, [pagination.page])
 
   // Handle page change
   const handlePageChange = (newPage: number) => {

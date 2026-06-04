@@ -46,7 +46,9 @@ function calculateTimeWeightedGrowth(roundups, annualReturnRate, currentDate = n
         // Calculate growth for this specific roundup
         // Formula: Growth = Principal * (dailyRate * daysInvested)
         // Using simple interest for daily calculations to avoid compounding complexity
-        const growthAmount = principal.times(dailyReturnRate).times(daysInvested);
+        const growthAmount = principal.times(
+            Decimal.pow(dailyReturnRate.plus(1), daysInvested)
+        ).minus(principal);
         
         // Apply growth caps to prevent unrealistic returns
         const maxGrowthRate = new Decimal(0.30); // 30% maximum growth
